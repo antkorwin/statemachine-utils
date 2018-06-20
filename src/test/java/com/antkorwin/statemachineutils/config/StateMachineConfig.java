@@ -15,7 +15,7 @@ import java.util.Optional;
 /**
  * Created on 05.05.2018.
  *
- * @author Korovin Anatolii
+ * @author Korovin Anatoliy
  */
 @Slf4j
 @Configuration
@@ -91,15 +91,6 @@ public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<States
                    .action(increment());
     }
 
-    private Action<States, Events> increment() {
-        return context -> {
-            int var = Optional.ofNullable(context.getExtendedState().getVariables().get("counter"))
-                              .map(v -> (int) v)
-                              .orElse(0);
-            context.getExtendedState().getVariables().put("counter", var + 1);
-        };
-    }
-
     private Guard<States, Events> alreadyDeployedGuard() {
         return context -> Optional.ofNullable(context.getExtendedState().getVariables().get("deployed"))
                                   .map(v -> (boolean) v)
@@ -110,6 +101,15 @@ public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<States
         return stateContext -> {
             log.warn("DEPLOY: Выкатываемся на препродакшен.");
             stateContext.getExtendedState().getVariables().put("deployed", true);
+        };
+    }
+
+    private Action<States, Events> increment() {
+        return context -> {
+            int var = Optional.ofNullable(context.getExtendedState().getVariables().get("counter"))
+                              .map(v -> (int) v)
+                              .orElse(0);
+            context.getExtendedState().getVariables().put("counter", var + 1);
         };
     }
 }

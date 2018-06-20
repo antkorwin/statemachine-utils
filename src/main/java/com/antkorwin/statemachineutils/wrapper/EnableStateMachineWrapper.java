@@ -8,13 +8,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Korovin Anatolii on 20.06.2018.
+ * Created on 20.06.2018.
  *
  * Annotation which imports configurations related to
  * create a StateMachineWrapper bean.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * @author Korovin Anatoliy
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
