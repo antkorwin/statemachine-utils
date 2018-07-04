@@ -1,5 +1,6 @@
 package com.antkorwin.statemachineutils.wrapper.impl;
 
+import com.antkorwin.commonutils.validation.Guard;
 import com.antkorwin.statemachineutils.wrapper.AbstractInMemoryStateMachinePersist;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import com.antkorwin.xsync.XSync;
@@ -11,6 +12,9 @@ import org.springframework.statemachine.persist.StateMachinePersister;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.STATE_MACHINE_IS_MANDATORY_ARGUMENT;
 
 /**
  * Created on 09.06.2018.
@@ -37,6 +41,9 @@ public class StateMachineRollbackWrapper<StatesT, EventsT> implements StateMachi
     @Override
     public void runWithRollback(StateMachine<StatesT, EventsT> machine,
                                 Consumer<StateMachine<StatesT, EventsT>> runnable) {
+
+        Guard.checkArgumentExist(machine, STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+        Guard.checkArgumentExist(runnable, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
 
         stateMachineXSync.execute(machine.getUuid(), () -> {
             UUID id = backupStateMachine(storage, machine);

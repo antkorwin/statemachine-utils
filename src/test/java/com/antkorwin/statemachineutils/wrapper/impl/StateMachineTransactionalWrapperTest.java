@@ -1,5 +1,7 @@
 package com.antkorwin.statemachineutils.wrapper.impl;
 
+import com.antkorwin.commonutils.exceptions.WrongArgumentException;
+import com.antkorwin.commonutils.validation.GuardCheck;
 import com.antkorwin.statemachineutils.config.Events;
 import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
@@ -33,6 +35,10 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.STATE_MACHINE_IS_MANDATORY_ARGUMENT;
+import static org.mockito.Mockito.mock;
 
 /**
  * Created on 21.06.2018.
@@ -110,6 +116,23 @@ public class StateMachineTransactionalWrapperTest {
     }
 
 
+    @Test
+    public void testWrongArgsStateMachine() {
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineTransactionalWrapper.runWithRollback(null, m -> m.start()),
+                         WrongArgumentException.class,
+                         STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+    }
+
+    @Test
+    public void testWrongArgsRunnable() {
+        StateMachine<States, Events> machine = mock(StateMachine.class);
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineTransactionalWrapper.runWithRollback(machine, null),
+                         WrongArgumentException.class,
+                         PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
+    }
+
     @TestConfiguration
     @EnableJpaRepositories(considerNestedRepositories = true)
     @EntityScan("com.antkorwin.statemachineutils.wrapper.impl")
@@ -118,6 +141,20 @@ public class StateMachineTransactionalWrapperTest {
         @Repository
         public interface FooRepository extends JpaRepository<Foo, Long> {
 
+        }
+
+        @Entity
+        @Setter
+        @Getter
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class Foo {
+            @Id
+            @GeneratedValue
+            private Long id;
+
+            @Column(nullable = false)
+            private String field;
         }
 
         @Service
@@ -139,23 +176,9 @@ public class StateMachineTransactionalWrapperTest {
                 return fooRepository.count();
             }
 
-            void clear(){
+            void clear() {
                 fooRepository.deleteAll();
             }
-        }
-
-        @Entity
-        @Setter
-        @Getter
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class Foo {
-            @Id
-            @GeneratedValue
-            private Long id;
-
-            @Column(nullable = false)
-            private String field;
         }
     }
 
