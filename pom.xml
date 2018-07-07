@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>com.github.antkorwin</groupId>
 			<artifactId>common-utils</artifactId>
-			<version>0.3</version>
+			<version>0.6</version>
 		</dependency>
 	</dependencies>
 
