@@ -115,6 +115,26 @@ public class StateMachineTransactionalWrapperTest {
         Assertions.assertThat(testService.size()).isEqualTo(1);
     }
 
+    @Test
+    public void testWithSuccessfulTransactionCommitAndEvaluateResultFromWrapper() {
+        // Arrange
+        StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine();
+
+        // Act
+        Config.Foo result = stateMachineTransactionalWrapper.evaluateWithRollback(stateMachine, machine -> {
+            machine.sendEvent(Events.START_FEATURE);
+            return testService.ok();
+        });
+
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+
+        Assertions.assertThat(stateMachine.getState().getId())
+                  .isEqualTo(States.IN_PROGRESS);
+
+        Assertions.assertThat(testService.size()).isEqualTo(1);
+    }
+
 
     @Test
     public void testWrongArgsStateMachine() {
@@ -132,6 +152,24 @@ public class StateMachineTransactionalWrapperTest {
                          WrongArgumentException.class,
                          PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
     }
+
+    @Test
+    public void testEvaluateWithWrongStateMachine() {
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineTransactionalWrapper.evaluateWithRollback(null, m -> 123),
+                         WrongArgumentException.class,
+                         STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+    }
+
+    @Test
+    public void testEvaluateWithWrongRunnable() {
+        StateMachine<States, Events> machine = mock(StateMachine.class);
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineTransactionalWrapper.evaluateWithRollback(machine, null),
+                         WrongArgumentException.class,
+                         PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
+    }
+
 
     @TestConfiguration
     @EnableJpaRepositories(considerNestedRepositories = true)
@@ -162,10 +200,10 @@ public class StateMachineTransactionalWrapperTest {
             @Autowired
             private FooRepository fooRepository;
 
-            void ok() {
+            Foo ok() {
                 Foo foo = new Foo();
                 foo.setField("123");
-                fooRepository.save(foo);
+                return fooRepository.save(foo);
             }
 
             void fail() {
@@ -181,5 +219,6 @@ public class StateMachineTransactionalWrapperTest {
             }
         }
     }
+
 
 }

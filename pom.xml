@@ -40,7 +40,7 @@
         <dependency>
             <groupId>com.github.antkorwin</groupId>
             <artifactId>xsync</artifactId>
-            <version>0.3</version>
+            <version>0.5</version>
         </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

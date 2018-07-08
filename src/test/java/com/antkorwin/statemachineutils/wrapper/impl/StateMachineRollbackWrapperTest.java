@@ -1,5 +1,6 @@
 package com.antkorwin.statemachineutils.wrapper.impl;
 
+import com.antkorwin.commonutils.concurrent.NonAtomicInt;
 import com.antkorwin.commonutils.exceptions.WrongArgumentException;
 import com.antkorwin.commonutils.validation.GuardCheck;
 import com.antkorwin.statemachineutils.config.Events;
@@ -7,7 +8,6 @@ import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
 import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -130,7 +130,7 @@ public class StateMachineRollbackWrapperTest {
     public void testConcurrencyWrapper() throws Exception {
         // Arrange
         StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine();
-        NotAtomicInt notAtomic = new NotAtomicInt();
+        NonAtomicInt notAtomic = new NonAtomicInt();
 
         // Act
         IntStream.range(0, ITERATION_NUMBER)
@@ -167,6 +167,40 @@ public class StateMachineRollbackWrapperTest {
 
 
     @Test
+    public void testRunWithReturnValue() throws Exception {
+        // Arrange
+        StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine();
+
+        // Act
+        Integer result = stateMachineWrapper.evaluateWithRollback(stateMachine, m -> 123);
+
+        // Assert
+        Assertions.assertThat(result).isEqualTo(123);
+    }
+
+    @Test
+    public void testConcurrencyWrapperWithEvaluateResult() throws Exception {
+        // Arrange
+        StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine();
+        NonAtomicInt notAtomic = new NonAtomicInt();
+        long expectedSum = ((long) (ITERATION_NUMBER + 1) * ITERATION_NUMBER) / 2;
+
+
+        // Act
+        long sum = IntStream.range(0, ITERATION_NUMBER)
+                            .boxed()
+                            .parallel()
+                            .mapToLong(i -> (long) stateMachineWrapper.evaluateWithRollback(stateMachine,
+                                                                                            machine -> notAtomic
+                                                                                                    .increment()))
+                            .sum();
+
+        // Assert
+        Assertions.assertThat(notAtomic.getValue()).isEqualTo(ITERATION_NUMBER);
+        Assertions.assertThat(sum).isEqualTo(expectedSum);
+    }
+
+    @Test
     public void testWrongArgsStateMachine() {
         // Act & asserts
         GuardCheck.check(() -> stateMachineWrapper.runWithRollback(null, m -> m.start()),
@@ -183,13 +217,20 @@ public class StateMachineRollbackWrapperTest {
                          PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
     }
 
-    @Getter
-    class NotAtomicInt {
-        int value = 0;
+    @Test
+    public void testEvaluateWithWrongStateMachine() {
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineWrapper.evaluateWithRollback(null, m -> 123),
+                         WrongArgumentException.class,
+                         STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+    }
 
-        int increment() {
-            value++;
-            return value;
-        }
+    @Test
+    public void testEvaluateWithWrongRunnable() {
+        StateMachine<States, Events> machine = mock(StateMachine.class);
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineWrapper.evaluateWithRollback(machine, null),
+                         WrongArgumentException.class,
+                         PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
     }
 }

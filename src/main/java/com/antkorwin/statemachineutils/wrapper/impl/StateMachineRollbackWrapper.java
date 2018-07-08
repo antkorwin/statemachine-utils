@@ -12,6 +12,7 @@ import org.springframework.statemachine.persist.StateMachinePersister;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
 import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.STATE_MACHINE_IS_MANDATORY_ARGUMENT;
@@ -27,12 +28,12 @@ import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorIn
 @Slf4j
 public class StateMachineRollbackWrapper<StatesT, EventsT> implements StateMachineWrapper<StatesT, EventsT> {
 
-    private final XSync<UUID> stateMachineXSync;
+    private final XSync<String> stateMachineXSync;
     private final StateMachinePersister storage;
     private final AbstractInMemoryStateMachinePersist persist;
 
     @Autowired
-    public StateMachineRollbackWrapper(XSync<UUID> stateMachineXSync) {
+    public StateMachineRollbackWrapper(XSync<String> stateMachineXSync) {
         this.stateMachineXSync = stateMachineXSync;
         this.persist = new AbstractInMemoryStateMachinePersist();
         this.storage = new DefaultStateMachinePersister(persist);
@@ -40,22 +41,51 @@ public class StateMachineRollbackWrapper<StatesT, EventsT> implements StateMachi
 
     @Override
     public void runWithRollback(StateMachine<StatesT, EventsT> machine,
-                                Consumer<StateMachine<StatesT, EventsT>> runnable) {
+                                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
 
         Guard.checkArgumentExist(machine, STATE_MACHINE_IS_MANDATORY_ARGUMENT);
-        Guard.checkArgumentExist(runnable, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
+        Guard.checkArgumentExist(processingFunction, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
 
-        stateMachineXSync.execute(machine.getUuid(), () -> {
+        stateMachineXSync.execute(getSynchronizationKey(machine), () -> {
             UUID id = backupStateMachine(storage, machine);
             try {
-                runnable.accept(machine);
+                processingFunction.accept(machine);
+                removeBackup(id);
             } catch (Throwable e) {
                 log.warn("StateMachineWrapper rolling back after the error: ", e);
                 restoreStateMachine(storage, machine, id);
+                removeBackup(id);
                 throw e;
             }
-            removeBackup(id);
         });
+    }
+
+    @Override
+    public <ResultT> ResultT evaluateWithRollback(StateMachine<StatesT, EventsT> machine,
+                                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunc) {
+
+        Guard.checkArgumentExist(machine, STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+        Guard.checkArgumentExist(processingFunc, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
+
+        return stateMachineXSync.evaluate(getSynchronizationKey(machine), () -> {
+            UUID id = backupStateMachine(storage, machine);
+            try {
+                ResultT processingResult = processingFunc.apply(machine);
+                removeBackup(id);
+                return processingResult;
+            } catch (Throwable e) {
+                log.warn("StateMachineWrapper rolling back after the error: ", e);
+                restoreStateMachine(storage, machine, id);
+                removeBackup(id);
+                throw e;
+            }
+        });
+    }
+
+    private String getSynchronizationKey(StateMachine<StatesT, EventsT> machine) {
+        return machine.getId() == null
+               ? machine.getUuid().toString()
+               : machine.getId();
     }
 
     private UUID backupStateMachine(StateMachinePersister storage,

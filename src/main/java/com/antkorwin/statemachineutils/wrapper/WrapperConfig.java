@@ -18,12 +18,12 @@ import java.util.UUID;
 public class WrapperConfig {
 
     @Bean
-    public XSync<UUID> stateMachineXSync() {
+    public XSync<String> stateMachineXSync() {
         return new XSync<>();
     }
 
     @Bean("stateMachineRollbackWrapper")
-    public StateMachineWrapper stateMachineWrapper(XSync<UUID> stateMachineXSync) {
+    public StateMachineWrapper stateMachineWrapper(XSync<String> stateMachineXSync) {
         return new StateMachineRollbackWrapper<>(stateMachineXSync);
     }
 

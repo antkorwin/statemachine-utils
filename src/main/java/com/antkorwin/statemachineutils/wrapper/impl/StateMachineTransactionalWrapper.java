@@ -14,6 +14,8 @@ import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
 import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.STATE_MACHINE_IS_MANDATORY_ARGUMENT;
@@ -56,13 +58,24 @@ public class StateMachineTransactionalWrapper<StatesT, EventsT> implements State
         Guard.checkArgumentExist(stateMachine, STATE_MACHINE_IS_MANDATORY_ARGUMENT);
         Guard.checkArgumentExist(processingFunction, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
 
-        Consumer<StateMachine<StatesT, EventsT>> safety = (machine) -> {
-            runInTransaction(() -> processingFunction.accept(stateMachine));
-        };
+        Consumer<StateMachine<StatesT, EventsT>> safety =
+                (machine) -> runInTransaction(() -> processingFunction.accept(machine));
 
         stateMachineRollbackWrapper.runWithRollback(stateMachine, safety);
     }
 
+    @Override
+    public <ResultT> ResultT evaluateWithRollback(StateMachine<StatesT, EventsT> stateMachine,
+                                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+
+        Guard.checkArgumentExist(stateMachine, STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+        Guard.checkArgumentExist(processingFunction, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
+
+        Function<StateMachine<StatesT, EventsT>, ResultT> safety =
+                machine -> evaluateInTransaction(() -> processingFunction.apply(machine));
+
+        return stateMachineRollbackWrapper.evaluateWithRollback(stateMachine, safety);
+    }
 
     private void runInTransaction(Runnable runnable) {
 
@@ -70,6 +83,20 @@ public class StateMachineTransactionalWrapper<StatesT, EventsT> implements State
         try {
             runnable.run();
             transactionManager.commit(status);
+        } catch (Throwable e) {
+            log.error("transaction rollback in wrapper: ", e);
+            transactionManager.rollback(status);
+            throw e;
+        }
+    }
+
+    private <ResultT> ResultT evaluateInTransaction(Supplier<ResultT> supplier) {
+
+        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        try {
+            ResultT result = supplier.get();
+            transactionManager.commit(status);
+            return result;
         } catch (Throwable e) {
             log.error("transaction rollback in wrapper: ", e);
             transactionManager.rollback(status);
