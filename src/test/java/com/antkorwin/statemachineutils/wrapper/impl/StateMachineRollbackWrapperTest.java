@@ -1,5 +1,7 @@
 package com.antkorwin.statemachineutils.wrapper.impl;
 
+import com.antkorwin.commonutils.exceptions.WrongArgumentException;
+import com.antkorwin.commonutils.validation.GuardCheck;
 import com.antkorwin.statemachineutils.config.Events;
 import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
@@ -20,6 +22,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.stream.IntStream;
 
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.STATE_MACHINE_IS_MANDATORY_ARGUMENT;
+import static org.mockito.Mockito.mock;
+
 /**
  * Created on 20.06.2018.
  *
@@ -30,7 +36,7 @@ import java.util.stream.IntStream;
 @RunWith(SpringRunner.class)
 @Import(StateMachineConfig.class)
 @EnableStateMachineWrapper
-public class StateMachineWrapperTest {
+public class StateMachineRollbackWrapperTest {
 
     public static final int ITERATION_NUMBER = 100000;
 
@@ -159,6 +165,23 @@ public class StateMachineWrapperTest {
                   .isEqualTo(ITERATION_NUMBER);
     }
 
+
+    @Test
+    public void testWrongArgsStateMachine() {
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineWrapper.runWithRollback(null, m -> m.start()),
+                         WrongArgumentException.class,
+                         STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+    }
+
+    @Test
+    public void testWrongArgsRunnable() {
+        StateMachine<States, Events> machine = mock(StateMachine.class);
+        // Act & asserts
+        GuardCheck.check(() -> stateMachineWrapper.runWithRollback(machine, null),
+                         WrongArgumentException.class,
+                         PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
+    }
 
     @Getter
     class NotAtomicInt {

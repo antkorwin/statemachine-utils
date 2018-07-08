@@ -1,5 +1,6 @@
 package com.antkorwin.statemachineutils.wrapper.impl;
 
+import com.antkorwin.commonutils.validation.Guard;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,9 @@ import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.function.Consumer;
+
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
+import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.STATE_MACHINE_IS_MANDATORY_ARGUMENT;
 
 /**
  * Created on 07.06.2018.
@@ -48,6 +52,9 @@ public class StateMachineTransactionalWrapper<StatesT, EventsT> implements State
     @Override
     public void runWithRollback(StateMachine<StatesT, EventsT> stateMachine,
                                 Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+
+        Guard.checkArgumentExist(stateMachine, STATE_MACHINE_IS_MANDATORY_ARGUMENT);
+        Guard.checkArgumentExist(processingFunction, PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
 
         Consumer<StateMachine<StatesT, EventsT>> safety = (machine) -> {
             runInTransaction(() -> processingFunction.accept(stateMachine));

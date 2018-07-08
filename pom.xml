@@ -60,6 +60,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.github.antkorwin</groupId>
+			<artifactId>common-utils</artifactId>
+			<version>0.6</version>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
