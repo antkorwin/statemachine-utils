@@ -1,9 +1,8 @@
 package com.antkorwin.statemachineutils.service;
 
+import com.antkorwin.commonutils.exceptions.BaseException;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
-import com.antkorwin.statemachineutils.wrapper.impl.StateMachineRollbackWrapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.StateMachineException;
 import org.springframework.statemachine.config.StateMachineFactory;
@@ -21,7 +20,7 @@ import java.util.function.Function;
 @Slf4j
 public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachineService<StatesT, EventsT> {
 
-    private final StateMachineWrapper<StatesT, EventsT>  rollbackWrapper;
+    private final StateMachineWrapper<StatesT, EventsT> rollbackWrapper;
     private final StateMachinePersister<StatesT, EventsT, UUID> persister;
     private final StateMachineFactory<StatesT, EventsT> factory;
 
@@ -53,6 +52,8 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
         StateMachine<StatesT, EventsT> machine = factory.getStateMachine(machineId.toString());
         try {
             return persister.restore(machine, machineId);
+        } catch (BaseException baseExc) {
+            throw baseExc;
         } catch (Exception e) {
             log.error("Error while restore state machine", e);
             throw new StateMachineException("Unable to read state machine from store", e);

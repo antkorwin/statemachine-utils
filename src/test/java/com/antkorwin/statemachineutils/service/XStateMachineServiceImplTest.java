@@ -1,9 +1,11 @@
 package com.antkorwin.statemachineutils.service;
 
+import com.antkorwin.commonutils.exceptions.NotFoundException;
+import com.antkorwin.commonutils.validation.GuardCheck;
 import com.antkorwin.statemachineutils.config.Events;
 import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
-import com.antkorwin.statemachineutils.wrapper.AbstractInMemoryStateMachinePersist;
+import com.antkorwin.statemachineutils.persist.PersisterErrorInfo;
 import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
@@ -11,16 +13,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.StateMachineContext;
 import org.springframework.statemachine.StateMachinePersist;
-import org.springframework.statemachine.persist.DefaultStateMachinePersister;
+import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.PostConstruct;
 import java.util.UUID;
 
 /**
@@ -36,11 +37,21 @@ import java.util.UUID;
 @EnableStateMachineWrapper
 public class XStateMachineServiceImplTest {
 
+    private static final UUID PERSISTED_ID = UUID.randomUUID();
+
     @Autowired
     private XStateMachineService<States, Events> xStateMachineService;
 
     @Autowired
     private StateMachinePersist<States, Events, UUID> persist;
+
+    @Autowired
+    private StateMachineFactory<States, Events> factory;
+
+    @Autowired
+    private StateMachinePersister<States, Events, UUID> persister;
+
+    private StateMachine<States, Events> mockMachine;
 
     @Test
     public void diTest() {
@@ -86,30 +97,28 @@ public class XStateMachineServiceImplTest {
     @Test
     public void testGet() {
         // Arrange
+        // Act
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+
+        // Asserts
+        Assertions.assertThat(machine.getId()).isEqualTo(mockMachine.getId());
+        //TODO: assert an equality of machines in more details
+    }
+
+    @Test
+    public void testGetWithWrongId() {
+        // Arrange
         UUID id = UUID.randomUUID();
 
         // Act
-        StateMachine<States, Events> machine = xStateMachineService.get(id);
-
-        // Asserts
-        Assertions.assertThat(machine).isNull();
+        GuardCheck.check(() -> xStateMachineService.get(id),
+                         NotFoundException.class,
+                         PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
     }
 
-
-
-    @TestConfiguration
-    public static class TestConf {
-
-        @Bean
-        public StateMachinePersist<States, Events, UUID> persist() {
-            return new AbstractInMemoryStateMachinePersist();
-        }
-
-        @Bean
-        public StateMachinePersister<States, Events, UUID> persister(
-                StateMachinePersist<States, Events, UUID> defaultPersist) {
-
-            return new DefaultStateMachinePersister<>(defaultPersist);
-        }
+    @PostConstruct
+    public void mockPersist() throws Exception {
+        mockMachine = factory.getStateMachine(PERSISTED_ID.toString());
+        persister.persist(mockMachine, PERSISTED_ID);
     }
 }
