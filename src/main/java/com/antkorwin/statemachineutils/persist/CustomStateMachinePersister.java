@@ -69,7 +69,7 @@ public class CustomStateMachinePersister<S, E, T> implements StateMachinePersist
         return stateMachine;
     }
 
-    protected StateMachineContext<S, E> buildStateMachineContext(StateMachine<S, E> stateMachine) {
+    public static <S,E> StateMachineContext<S, E> buildStateMachineContext(StateMachine<S, E> stateMachine) {
         ExtendedState extendedState = new DefaultExtendedState();
         extendedState.getVariables().putAll(stateMachine.getExtendedState().getVariables());
 
@@ -111,7 +111,7 @@ public class CustomStateMachinePersister<S, E, T> implements StateMachinePersist
         return new DefaultStateMachineContext<S, E>(childs, id, null, null, extendedState, historyStates, stateMachine.getId());
     }
 
-    private S getDeepState(State<S, E> state) {
+    private static <S,E> S getDeepState(State<S, E> state) {
         Collection<S> ids1 = state.getIds();
         @SuppressWarnings("unchecked")
         S[] ids2 = (S[]) ids1.toArray();

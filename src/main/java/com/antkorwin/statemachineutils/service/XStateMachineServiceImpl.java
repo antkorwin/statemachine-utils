@@ -41,8 +41,8 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
             persister.persist(machine, machineId);
             return machine;
         } catch (Exception e) {
-            log.error("unable to persist new state machine : " + machineId.toString(), e);
-            throw new RuntimeException(e);
+            log.error("Unable to persist new state machine : " + machineId.toString(), e);
+            throw new StateMachineException("Unable to persist new state machine", e);
         }
     }
 
@@ -61,10 +61,23 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
     }
 
     @Override
+    public StateMachine<StatesT, EventsT> update(UUID machineId, StateMachine<StatesT, EventsT> machine) {
+        try {
+            persister.persist(machine, machineId);
+            return machine;
+        } catch (Exception e) {
+            log.error("unable to persist the state machine during the update: " + machineId.toString(), e);
+            throw new StateMachineException("Unable to persist the state machine during the update", e);
+        }
+    }
+
+    @Override
     public <ResultT> ResultT evaluateWithRollback(UUID id,
                                                   Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
 
         StateMachine<StatesT, EventsT> machine = get(id);
-        return rollbackWrapper.evaluateWithRollback(machine, processingFunction);
+        ResultT result = rollbackWrapper.evaluateWithRollback(machine, processingFunction);
+        update(id, machine);
+        return result;
     }
 }

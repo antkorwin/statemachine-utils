@@ -5,6 +5,7 @@ import com.antkorwin.commonutils.validation.GuardCheck;
 import com.antkorwin.statemachineutils.config.Events;
 import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
+import com.antkorwin.statemachineutils.persist.CustomStateMachinePersister;
 import com.antkorwin.statemachineutils.persist.PersisterErrorInfo;
 import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,13 @@ public class XStateMachineServiceImplTest {
 
     private StateMachine<States, Events> mockMachine;
 
+    @PostConstruct
+    public void setUp() throws Exception {
+        mockMachine = factory.getStateMachine(PERSISTED_ID.toString());
+        persister.persist(mockMachine, PERSISTED_ID);
+    }
+
+
     @Test
     public void diTest() {
         // Arrange
@@ -83,7 +91,7 @@ public class XStateMachineServiceImplTest {
         Assertions.assertThat(persist.read(id)).isNull();
 
         // Act
-        StateMachine<States, Events> machine = xStateMachineService.create(id);
+        xStateMachineService.create(id);
 
         // Asserts
         StateMachineContext<States, Events> persistedMachine = persist.read(id);
@@ -116,9 +124,77 @@ public class XStateMachineServiceImplTest {
                          PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
     }
 
-    @PostConstruct
-    public void mockPersist() throws Exception {
-        mockMachine = factory.getStateMachine(PERSISTED_ID.toString());
-        persister.persist(mockMachine, PERSISTED_ID);
+    @Test
+    public void testEvaluate() {
+        // Arrange
+        // Act
+        States initialState =
+                xStateMachineService.evaluateWithRollback(PERSISTED_ID,
+                                                          stateMachine -> stateMachine.getState().getId());
+
+        // Asserts
+        Assertions.assertThat(initialState).isEqualTo(States.BACKLOG);
+    }
+
+    @Test
+    public void testEvaluateWithChangeState() {
+
+        // Act
+        StateMachine<States, Events> machine = xStateMachineService.evaluateWithRollback(PERSISTED_ID, stateMachine -> {
+            stateMachine.sendEvent(Events.START_FEATURE);
+            return stateMachine;
+        });
+
+        // Read a result from the storage
+        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_ID);
+
+        // Asserts
+        assertThatMachinesEqual(machine, persistedMachine);
+    }
+
+    @Test
+    public void testUpdateBehavior() {
+        // Arrange
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        machine.sendEvent(Events.START_FEATURE);
+        // Check precondition
+        Assertions.assertThat(machine.getState().getId()).isEqualTo(States.IN_PROGRESS);
+
+        // Act
+        StateMachine<States, Events> returnedMachine = xStateMachineService.update(PERSISTED_ID, machine);
+
+        // Asserts
+        Assertions.assertThat(returnedMachine).isNotNull();
+        Assertions.assertThat(returnedMachine.getState().getId()).isEqualTo(States.IN_PROGRESS);
+        // Check a machine in the storage
+        StateMachine<States, Events> machineAfterCommit = xStateMachineService.get(PERSISTED_ID);
+        Assertions.assertThat(machineAfterCommit.getState().getId()).isEqualTo(States.IN_PROGRESS);
+    }
+
+    @Test
+    public void testUpdateInternal() throws Exception {
+        // Arrange
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        machine.sendEvent(Events.START_FEATURE);
+        StateMachineContext<States, Events> machineContext =
+                CustomStateMachinePersister.buildStateMachineContext(machine);
+
+        // Act
+        xStateMachineService.update(PERSISTED_ID, machine);
+
+        // Asserts
+        StateMachineContext<States, Events> actualContext = persist.read(PERSISTED_ID);
+        Assertions.assertThat(actualContext).isEqualToComparingFieldByFieldRecursively(machineContext);
+    }
+
+    private void assertThatMachinesEqual(StateMachine<States, Events> firstMachine,
+                                         StateMachine<States, Events> secondMachine) {
+        // Arrange
+        StateMachineContext<States, Events> firstContext = CustomStateMachinePersister
+                .buildStateMachineContext(firstMachine);
+        StateMachineContext<States, Events> secondContext = CustomStateMachinePersister
+                .buildStateMachineContext(secondMachine);
+        // Assert
+        Assertions.assertThat(firstContext).isEqualToComparingFieldByFieldRecursively(secondContext);
     }
 }

@@ -18,4 +18,6 @@ public interface XStateMachineService<StatesT, EventsT> {
     StateMachine<StatesT, EventsT> get(UUID id);
 
     <ResultT> ResultT evaluateWithRollback(UUID id, Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
+
+    StateMachine<StatesT, EventsT> update(UUID machineId, StateMachine<StatesT, EventsT> machine);
 }
