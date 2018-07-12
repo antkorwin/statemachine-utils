@@ -83,8 +83,8 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
     }
 
     @Override
-    public <ResultT> ResultT evaluateWithTransactionalRollback(UUID stateMachineId,
-                                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+    public <ResultT> ResultT evaluateTransactional(UUID stateMachineId,
+                                                   Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
 
         return internalEvaluate(stateMachineId, processingFunction, transactionalWrapper);
     }

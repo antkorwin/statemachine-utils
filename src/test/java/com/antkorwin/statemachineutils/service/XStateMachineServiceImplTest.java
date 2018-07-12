@@ -255,7 +255,7 @@ public class XStateMachineServiceImplTest {
         Exception actualException = null;
         try {
             StateMachine<States, Events> machine = xStateMachineService
-                    .evaluateWithTransactionalRollback(PERSISTED_ID, stateMachine -> {
+                    .evaluateTransactional(PERSISTED_ID, stateMachine -> {
                         stateMachine.sendEvent(Events.START_FEATURE);
                         testService.ok();
                         testService.fail();
@@ -285,7 +285,7 @@ public class XStateMachineServiceImplTest {
 
         // Act
         StateMachine<States, Events> machine = xStateMachineService
-                .evaluateWithTransactionalRollback(PERSISTED_ID, stateMachine -> {
+                .evaluateTransactional(PERSISTED_ID, stateMachine -> {
                     stateMachine.sendEvent(Events.START_FEATURE);
                     testService.ok();
                     return stateMachine;
@@ -312,7 +312,7 @@ public class XStateMachineServiceImplTest {
         Exception actualException = null;
         try {
             StateMachine<States, Events> machine = xStateMachineService
-                    .evaluateWithTransactionalRollback(PERSISTED_ID, stateMachine -> {
+                    .evaluateTransactional(PERSISTED_ID, stateMachine -> {
                         stateMachine.sendEvent(Events.START_FEATURE);
                         try {
                             persister.persist(stateMachine, PERSISTED_ID);

@@ -77,6 +77,6 @@ public interface XStateMachineService<StatesT, EventsT> {
      * @param <ResultT>          result of the function
      * @return result of the function
      */
-    <ResultT> ResultT evaluateWithTransactionalRollback(UUID stateMachineId,
-                                                        Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
+    <ResultT> ResultT evaluateTransactional(UUID stateMachineId,
+                                            Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 }
