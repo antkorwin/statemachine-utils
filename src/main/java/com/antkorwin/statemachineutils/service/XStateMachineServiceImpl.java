@@ -9,6 +9,7 @@ import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -64,16 +65,6 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
     }
 
     @Override
-    public <ResultT> ResultT evaluateWithRollback(UUID id,
-                                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
-
-        StateMachine<StatesT, EventsT> machine = get(id);
-        ResultT result = rollbackWrapper.evaluateWithRollback(machine, processingFunction);
-        update(id, machine);
-        return result;
-    }
-
-    @Override
     public StateMachine<StatesT, EventsT> update(UUID machineId, StateMachine<StatesT, EventsT> machine) {
         try {
             persister.persist(machine, machineId);
@@ -85,12 +76,32 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
     }
 
     @Override
-    public <ResultT> ResultT evaluateWithTransactionalRollback(UUID id,
+    public <ResultT> ResultT evaluate(UUID stateMachineId,
+                                      Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+
+        return internalEvaluate(stateMachineId, processingFunction, rollbackWrapper);
+    }
+
+    @Override
+    public <ResultT> ResultT evaluateWithTransactionalRollback(UUID stateMachineId,
                                                                Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
 
-        StateMachine<StatesT, EventsT> machine = get(id);
-        ResultT result = transactionalWrapper.evaluateWithRollback(machine, processingFunction);
-        update(id, machine);
-        return result;
+        return internalEvaluate(stateMachineId, processingFunction, transactionalWrapper);
+    }
+
+
+    private <ResultT> ResultT internalEvaluate(UUID machineId,
+                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction,
+                                               StateMachineWrapper<StatesT,EventsT> wrapper){
+
+        StateMachine<StatesT, EventsT> machine = get(machineId);
+        try {
+            ResultT result = wrapper.evaluateWithRollback(machine, processingFunction);
+            update(machineId, machine);
+            return result;
+        } catch (Exception e) {
+            update(machineId, machine); // persist old version of a roll-backed S.M.
+            throw e;
+        }
     }
 }

@@ -172,7 +172,7 @@ public class XStateMachineServiceImplTest {
         // Arrange
         // Act
         States initialState =
-                xStateMachineService.evaluateWithRollback(PERSISTED_ID,
+                xStateMachineService.evaluate(PERSISTED_ID,
                                                           stateMachine -> stateMachine.getState().getId());
 
         // Asserts
@@ -183,7 +183,7 @@ public class XStateMachineServiceImplTest {
     public void testEvaluateWithChangeState() {
 
         // Act
-        StateMachine<States, Events> machine = xStateMachineService.evaluateWithRollback(PERSISTED_ID, stateMachine -> {
+        StateMachine<States, Events> machine = xStateMachineService.evaluate(PERSISTED_ID, stateMachine -> {
             stateMachine.sendEvent(Events.START_FEATURE);
             return stateMachine;
         });
@@ -205,7 +205,7 @@ public class XStateMachineServiceImplTest {
         };
 
         // Act
-        GuardCheck.check(() -> xStateMachineService.evaluateWithRollback(PERSISTED_ID, func),
+        GuardCheck.check(() -> xStateMachineService.evaluate(PERSISTED_ID, func),
                          NotFoundException.class,
                          PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
 
@@ -215,6 +215,39 @@ public class XStateMachineServiceImplTest {
         // Asserts
         Assertions.assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
     }
+
+    /**
+     * This case shows how to avoid an inconsistency while in a processing function
+     * you try to call something with a side effect such as persist an intermediate state of SM.
+     */
+    @Test
+    public void testRollbackInEvaluationWithErrorAndTryingToPersistMachineInProcessingFunction() {
+
+        Function<StateMachine<States, Events>, String> processingFunc = stateMachine -> {
+            stateMachine.sendEvent(Events.START_FEATURE);
+            try {
+                persister.persist(stateMachine, PERSISTED_ID);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Assertions.fail(e.getMessage());
+            }
+            throw new NotFoundException(PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
+            //TODO: replace on a more relevant exception
+        };
+
+        // Act
+        GuardCheck.check(() -> xStateMachineService.evaluate(PERSISTED_ID, processingFunc),
+                         NotFoundException.class,
+                         PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
+
+
+        // Read a result from the storage
+        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_ID);
+        // Asserts
+        Assertions.assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
+    }
+
+
 
     @Test
     public void testEvaluateTransactionalWithChangeStateAndFailOnTransactionCommit() {
@@ -270,6 +303,45 @@ public class XStateMachineServiceImplTest {
 
         // Check that entity not save in database
         Assertions.assertThat(testService.size()).isEqualTo(1);
+    }
+
+
+    @Test
+    public void testEvaluateWithRollbackWhileTryingToPersistMachineInProcessingFunction() {
+
+        // Act
+        Exception actualException = null;
+        try {
+            StateMachine<States, Events> machine = xStateMachineService
+                    .evaluateWithTransactionalRollback(PERSISTED_ID, stateMachine -> {
+                        stateMachine.sendEvent(Events.START_FEATURE);
+                        try {
+                            persister.persist(stateMachine, PERSISTED_ID);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Assertions.fail(e.getMessage());
+                        }
+                        testService.ok();
+                        testService.fail();
+                        return stateMachine;
+                    });
+        } catch (Exception e) {
+            actualException = e;
+        }
+
+        // Asserts
+        Assertions.assertThat(actualException.getMessage())
+                  .contains("not-null property references a null or transient value");
+        Assertions.assertThat(actualException)
+                  .isInstanceOf(DataIntegrityViolationException.class);
+
+        // Read a result from the storage
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+
+        Assertions.assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
+
+        // Check that entity not save in database
+        Assertions.assertThat(testService.size()).isEqualTo(0);
     }
 
     private void assertThatMachinesEqual(StateMachine<States, Events> firstMachine,
