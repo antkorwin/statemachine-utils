@@ -3,10 +3,9 @@ package com.antkorwin.statemachineutils.wrapper;
 import com.antkorwin.commonutils.validation.ErrorInfo;
 
 /**
- * Created by Korovin Anatolii on 05.07.2018.
+ * Created on 05.07.2018.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * @author Korovin Anatoliy
  */
 public enum StateMachineWrapperErrorInfo implements ErrorInfo {
     STATE_MACHINE_IS_MANDATORY_ARGUMENT("state machine is a mandatory argument for this method in a wrapper."),
