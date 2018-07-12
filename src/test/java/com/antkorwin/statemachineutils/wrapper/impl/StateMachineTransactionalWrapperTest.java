@@ -2,6 +2,7 @@ package com.antkorwin.statemachineutils.wrapper.impl;
 
 import com.antkorwin.commonutils.exceptions.WrongArgumentException;
 import com.antkorwin.commonutils.validation.GuardCheck;
+import com.antkorwin.statemachineutils.TransactionalTestConfig;
 import com.antkorwin.statemachineutils.config.Events;
 import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
@@ -48,7 +49,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 @SpringBootTest
 @RunWith(SpringRunner.class)
-@Import(StateMachineConfig.class)
+@Import({StateMachineConfig.class, TransactionalTestConfig.class})
 @EnableStateMachineWrapper
 public class StateMachineTransactionalWrapperTest {
 
@@ -60,7 +61,7 @@ public class StateMachineTransactionalWrapperTest {
     private StateMachineFactory<States, Events> stateMachineFactory;
 
     @Autowired
-    private Config.TestService testService;
+    private TransactionalTestConfig.TestService testService;
 
     @Before
     public void setUp() throws Exception {
@@ -121,7 +122,7 @@ public class StateMachineTransactionalWrapperTest {
         StateMachine<States, Events> stateMachine = stateMachineFactory.getStateMachine();
 
         // Act
-        Config.Foo result = stateMachineTransactionalWrapper.evaluateWithRollback(stateMachine, machine -> {
+        TransactionalTestConfig.Foo result = stateMachineTransactionalWrapper.evaluateWithRollback(stateMachine, machine -> {
             machine.sendEvent(Events.START_FEATURE);
             return testService.ok();
         });
@@ -169,56 +170,4 @@ public class StateMachineTransactionalWrapperTest {
                          WrongArgumentException.class,
                          PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT);
     }
-
-
-    @TestConfiguration
-    @EnableJpaRepositories(considerNestedRepositories = true)
-    @EntityScan("com.antkorwin.statemachineutils.wrapper.impl")
-    public static class Config {
-
-        @Repository
-        public interface FooRepository extends JpaRepository<Foo, Long> {
-
-        }
-
-        @Entity
-        @Setter
-        @Getter
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class Foo {
-            @Id
-            @GeneratedValue
-            private Long id;
-
-            @Column(nullable = false)
-            private String field;
-        }
-
-        @Service
-        public class TestService {
-            @Autowired
-            private FooRepository fooRepository;
-
-            Foo ok() {
-                Foo foo = new Foo();
-                foo.setField("123");
-                return fooRepository.save(foo);
-            }
-
-            void fail() {
-                fooRepository.save(new Foo());
-            }
-
-            long size() {
-                return fooRepository.count();
-            }
-
-            void clear() {
-                fooRepository.deleteAll();
-            }
-        }
-    }
-
-
 }

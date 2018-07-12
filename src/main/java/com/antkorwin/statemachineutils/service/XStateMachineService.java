@@ -20,4 +20,7 @@ public interface XStateMachineService<StatesT, EventsT> {
     <ResultT> ResultT evaluateWithRollback(UUID id, Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 
     StateMachine<StatesT, EventsT> update(UUID machineId, StateMachine<StatesT, EventsT> machine);
+
+    <ResultT> ResultT evaluateWithTransactionalRollback(UUID id,
+                                                        Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 }
