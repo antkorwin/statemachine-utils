@@ -1,10 +1,12 @@
 package com.antkorwin.statemachineutils.service;
 
+import com.antkorwin.statemachineutils.persist.DefaultPersistConfig;
 import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
  */
 @Configuration
 @EnableStateMachineWrapper
+@Import(DefaultPersistConfig.class)
 public class XServiceConfig {
 
     @Bean

@@ -1,5 +1,6 @@
 package com.antkorwin.statemachineutils.persist;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.StateMachinePersist;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class DefaultPersistConfig {
 
     @Bean
+    @ConditionalOnMissingBean
     public <StatesT, EventsT> StateMachinePersist<StatesT, EventsT, UUID> persist() {
         return new InMemoryStateMachinePersist();
     }
