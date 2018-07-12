@@ -9,10 +9,12 @@ import org.springframework.statemachine.persist.StateMachinePersister;
 import java.util.UUID;
 
 /**
- * Created by Korovin Anatolii on 11.07.2018.
+ * Created on 11.07.2018.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * This is a configuration with a StateMachinePersister for the XStateMachineService,
+ * and a default in-memory StateMachinePersist(if missing others)
+ *
+ * @author Korovin Anatoliy
  */
 @Configuration
 public class DefaultPersistConfig {

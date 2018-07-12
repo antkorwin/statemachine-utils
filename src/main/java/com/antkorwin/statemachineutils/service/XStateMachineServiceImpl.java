@@ -13,10 +13,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Created by Korovin Anatolii on 09.07.2018.
+ * Created on 09.07.2018.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * @author Korovin Anatoliy
  */
 @Slf4j
 public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachineService<StatesT, EventsT> {

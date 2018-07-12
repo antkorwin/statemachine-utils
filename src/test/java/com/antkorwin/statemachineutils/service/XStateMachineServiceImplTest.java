@@ -29,10 +29,9 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- * Created by Korovin Anatolii on 09.07.2018.
+ * Created on 09.07.2018.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * @author Korovin Anatoliy
  */
 @Slf4j
 @SpringBootTest

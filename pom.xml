@@ -11,6 +11,19 @@
 	<name>statemachine-utils</name>
 	<description>Utils for the Spring State Machine library</description>
 
+	<developers>
+		<developer>
+			<id>antkorwin</id>
+			<name>Anatoliy Korovin</name>
+			<email>antkorwin@gmail.com</email>
+			<url>antkorwin.com</url>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+	</developers>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>

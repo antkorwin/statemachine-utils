@@ -8,10 +8,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Korovin Anatolii on 12.07.2018.
+ * Created on 12.07.2018.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * Annotation which imports configurations related to
+ * create a XStateMachineService bean.
+ *
+ * @author Korovin Anatoliy
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

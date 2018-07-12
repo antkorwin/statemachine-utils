@@ -11,7 +11,7 @@ import static org.mockito.Mockito.spy;
  * Created on 12.07.2018.
  *
  * A static helper to get a context of the state machine
- * by the instance.
+ * by the instance. It's intended to use in tests.
  *
  * @author Korovin Anatoliy
  */

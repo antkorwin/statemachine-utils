@@ -13,10 +13,9 @@ import org.springframework.statemachine.persist.StateMachinePersister;
 import java.util.UUID;
 
 /**
- * Created by Korovin Anatolii on 09.07.2018.
+ * Created on 09.07.2018.
  *
- * @author Korovin Anatolii
- * @version 1.0
+ * @author Korovin Anatoliy
  */
 @Configuration
 @EnableStateMachineWrapper
