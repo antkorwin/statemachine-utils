@@ -1,6 +1,5 @@
 package com.antkorwin.statemachineutils.persist;
 
-import com.antkorwin.statemachineutils.wrapper.AbstractInMemoryStateMachinePersist;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.StateMachinePersist;
@@ -19,13 +18,13 @@ public class DefaultPersistConfig {
 
     @Bean
     public <StatesT, EventsT> StateMachinePersist<StatesT, EventsT, UUID> persist() {
-        return new AbstractInMemoryStateMachinePersist();
+        return new InMemoryStateMachinePersist();
     }
 
     @Bean
     public <StatesT, EventsT> StateMachinePersister<StatesT, EventsT, UUID> persister(
             StateMachinePersist<StatesT, EventsT, UUID> defaultPersist) throws Exception {
 
-        return new CustomStateMachinePersister<>(defaultPersist);
+        return new DefaultStateMachinePersisterDecorator<>(defaultPersist);
     }
 }

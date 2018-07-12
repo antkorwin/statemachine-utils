@@ -1,7 +1,7 @@
 package com.antkorwin.statemachineutils.wrapper.impl;
 
 import com.antkorwin.commonutils.validation.Guard;
-import com.antkorwin.statemachineutils.wrapper.AbstractInMemoryStateMachinePersist;
+import com.antkorwin.statemachineutils.persist.InMemoryStateMachinePersist;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import com.antkorwin.xsync.XSync;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +30,12 @@ public class StateMachineRollbackWrapper<StatesT, EventsT> implements StateMachi
 
     private final XSync<String> stateMachineXSync;
     private final StateMachinePersister storage;
-    private final AbstractInMemoryStateMachinePersist persist;
+    private final InMemoryStateMachinePersist persist;
 
     @Autowired
     public StateMachineRollbackWrapper(XSync<String> stateMachineXSync) {
         this.stateMachineXSync = stateMachineXSync;
-        this.persist = new AbstractInMemoryStateMachinePersist();
+        this.persist = new InMemoryStateMachinePersist();
         this.storage = new DefaultStateMachinePersister(persist);
     }
 

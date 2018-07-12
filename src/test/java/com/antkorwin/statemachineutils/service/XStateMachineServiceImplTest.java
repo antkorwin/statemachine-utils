@@ -6,8 +6,8 @@ import com.antkorwin.statemachineutils.TransactionalTestConfig;
 import com.antkorwin.statemachineutils.config.Events;
 import com.antkorwin.statemachineutils.config.StateMachineConfig;
 import com.antkorwin.statemachineutils.config.States;
-import com.antkorwin.statemachineutils.persist.CustomStateMachinePersister;
 import com.antkorwin.statemachineutils.persist.PersisterErrorInfo;
+import com.antkorwin.statemachineutils.persist.StateMachineContextEvaluator;
 import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
@@ -157,7 +157,7 @@ public class XStateMachineServiceImplTest {
         StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
         machine.sendEvent(Events.START_FEATURE);
         StateMachineContext<States, Events> machineContext =
-                CustomStateMachinePersister.buildStateMachineContext(machine);
+                StateMachineContextEvaluator.getContext(machine);
 
         // Act
         xStateMachineService.update(PERSISTED_ID, machine);
@@ -173,7 +173,7 @@ public class XStateMachineServiceImplTest {
         // Act
         States initialState =
                 xStateMachineService.evaluate(PERSISTED_ID,
-                                                          stateMachine -> stateMachine.getState().getId());
+                                              stateMachine -> stateMachine.getState().getId());
 
         // Asserts
         Assertions.assertThat(initialState).isEqualTo(States.BACKLOG);
@@ -246,7 +246,6 @@ public class XStateMachineServiceImplTest {
         // Asserts
         Assertions.assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
     }
-
 
 
     @Test
@@ -347,10 +346,12 @@ public class XStateMachineServiceImplTest {
     private void assertThatMachinesEqual(StateMachine<States, Events> firstMachine,
                                          StateMachine<States, Events> secondMachine) {
         // Arrange
-        StateMachineContext<States, Events> firstContext = CustomStateMachinePersister
-                .buildStateMachineContext(firstMachine);
-        StateMachineContext<States, Events> secondContext = CustomStateMachinePersister
-                .buildStateMachineContext(secondMachine);
+        StateMachineContext<States, Events> firstContext =
+                StateMachineContextEvaluator.getContext(firstMachine);
+
+        StateMachineContext<States, Events> secondContext =
+                StateMachineContextEvaluator.getContext(secondMachine);
+
         // Assert
         Assertions.assertThat(firstContext).isEqualToComparingFieldByFieldRecursively(secondContext);
     }
