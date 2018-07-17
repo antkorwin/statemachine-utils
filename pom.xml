@@ -76,7 +76,7 @@
 		<dependency>
 			<groupId>com.github.antkorwin</groupId>
 			<artifactId>common-utils</artifactId>
-			<version>0.6</version>
+			<version>0.71</version>
 		</dependency>
 	</dependencies>
 

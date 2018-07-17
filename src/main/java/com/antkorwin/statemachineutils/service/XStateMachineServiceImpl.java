@@ -12,6 +12,10 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_PERSIST_NEW_STATE_MACHINE;
+import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE;
+import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_READ_STATE_MACHINE_FROM_STORE;
+
 /**
  * Created on 09.07.2018.
  *
@@ -45,7 +49,7 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
             return machine;
         } catch (Exception e) {
             log.error("Unable to persist new state machine : " + machineId.toString(), e);
-            throw new StateMachineException("Unable to persist new state machine", e);  //TODO: replace on my own exc.
+            throw new XStateMachineException(UNABLE_TO_PERSIST_NEW_STATE_MACHINE, e);
         }
     }
 
@@ -59,7 +63,7 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
             throw baseExc;
         } catch (Exception e) {
             log.error("Error while restore state machine", e);
-            throw new StateMachineException("Unable to read state machine from store", e); //TODO: replace on my own exc.
+            throw new XStateMachineException(UNABLE_TO_READ_STATE_MACHINE_FROM_STORE, e);
         }
     }
 
@@ -70,7 +74,7 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
             return machine;
         } catch (Exception e) {
             log.error("unable to persist the state machine during the update: " + machineId.toString(), e);
-            throw new StateMachineException("Unable to persist the state machine during the update", e); //TODO: replace on my own exc.
+            throw new XStateMachineException(UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE, e);
         }
     }
 

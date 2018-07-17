@@ -1,12 +1,14 @@
 package com.antkorwin.statemachineutils.persist;
 
 import com.antkorwin.commonutils.validation.ErrorInfo;
+import com.antkorwin.statemachineutils.service.ErrorInfoUnique;
 
 /**
  * Created on 10.07.2018.
  *
  * @author Korovin Anatoliy
  */
+@ErrorInfoUnique
 public enum PersisterErrorInfo implements ErrorInfo{
     COULD_NOT_READ_STATEMACHINE_FROM_PERSIST("could not read the StateMachine form the Persist");
 
