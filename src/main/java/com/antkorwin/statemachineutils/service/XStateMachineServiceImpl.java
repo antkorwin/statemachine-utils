@@ -1,20 +1,18 @@
 package com.antkorwin.statemachineutils.service;
 
 import com.antkorwin.commonutils.exceptions.BaseException;
+import com.antkorwin.statemachineutils.resolver.StateMachineResolver;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.statemachine.StateMachine;
-import org.springframework.statemachine.StateMachineException;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
 
+import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_PERSIST_NEW_STATE_MACHINE;
-import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE;
-import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_READ_STATE_MACHINE_FROM_STORE;
+import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.*;
 
 /**
  * Created on 09.07.2018.
@@ -28,16 +26,19 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
     private final StateMachineWrapper<StatesT, EventsT> transactionalWrapper;
     private final StateMachinePersister<StatesT, EventsT, UUID> persister;
     private final StateMachineFactory<StatesT, EventsT> factory;
+    private final StateMachineResolver<StatesT, EventsT> resolver;
 
     public XStateMachineServiceImpl(
             StateMachineWrapper<StatesT, EventsT> rollbackWrapper,
             StateMachineWrapper<StatesT, EventsT> transactionalWrapper,
             StateMachinePersister<StatesT, EventsT, UUID> persister,
-            StateMachineFactory<StatesT, EventsT> factory) {
+            StateMachineFactory<StatesT, EventsT> factory,
+            StateMachineResolver<StatesT, EventsT> resolver) {
         this.rollbackWrapper = rollbackWrapper;
         this.transactionalWrapper = transactionalWrapper;
         this.persister = persister;
         this.factory = factory;
+        this.resolver = resolver;
     }
 
     @Override
@@ -92,10 +93,14 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
         return internalEvaluate(stateMachineId, processingFunction, transactionalWrapper);
     }
 
+    @Override
+    public List<EventsT> retrieveAvailableEvents(UUID stateMachineId) {
+        return resolver.getAvailableEvents(get(stateMachineId));
+    }
 
     private <ResultT> ResultT internalEvaluate(UUID machineId,
                                                Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction,
-                                               StateMachineWrapper<StatesT,EventsT> wrapper){
+                                               StateMachineWrapper<StatesT, EventsT> wrapper) {
 
         StateMachine<StatesT, EventsT> machine = get(machineId);
         try {

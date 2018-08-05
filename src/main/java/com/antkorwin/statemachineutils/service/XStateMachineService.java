@@ -2,6 +2,7 @@ package com.antkorwin.statemachineutils.service;
 
 import org.springframework.statemachine.StateMachine;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -78,4 +79,12 @@ public interface XStateMachineService<StatesT, EventsT> {
      */
     <ResultT> ResultT evaluateTransactional(UUID stateMachineId,
                                             Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
+
+    /**
+     * Retrieve all available events from a current state of a state machine.
+     *
+     * @param stateMachineId identifier of the state machine
+     * @return list of available events for the current state of the state machine
+     */
+    List<EventsT> retrieveAvailableEvents(UUID stateMachineId);
 }

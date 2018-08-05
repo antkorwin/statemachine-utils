@@ -25,8 +25,11 @@ import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created on 09.07.2018.
@@ -40,7 +43,7 @@ import java.util.function.Function;
 @EnableStateMachineWrapper
 public class XStateMachineServiceImplTest {
 
-    private static final UUID PERSISTED_ID = UUID.randomUUID();
+    private static final UUID PERSISTED_MACHINE_ID = UUID.randomUUID();
 
     @Autowired
     private XStateMachineService<States, Events> xStateMachineService;
@@ -63,8 +66,8 @@ public class XStateMachineServiceImplTest {
     public void setUp() throws Exception {
         testService.clear();
 
-        mockMachine = factory.getStateMachine(PERSISTED_ID.toString());
-        persister.persist(mockMachine, PERSISTED_ID);
+        mockMachine = factory.getStateMachine(PERSISTED_MACHINE_ID.toString());
+        persister.persist(mockMachine, PERSISTED_MACHINE_ID);
     }
 
 
@@ -72,7 +75,7 @@ public class XStateMachineServiceImplTest {
     public void diTest() {
         // Arrange
         // Act
-        Assertions.assertThat(xStateMachineService).isNotNull();
+        assertThat(xStateMachineService).isNotNull();
         // Asserts
     }
 
@@ -85,8 +88,8 @@ public class XStateMachineServiceImplTest {
         StateMachine<States, Events> machine = xStateMachineService.create(id);
 
         // Asserts
-        Assertions.assertThat(machine).isNotNull();
-        Assertions.assertThat(machine.getId()).isEqualTo(id.toString());
+        assertThat(machine).isNotNull();
+        assertThat(machine.getId()).isEqualTo(id.toString());
     }
 
     @Test
@@ -95,14 +98,14 @@ public class XStateMachineServiceImplTest {
         UUID id = UUID.randomUUID();
 
         // Check precondition
-        Assertions.assertThat(persist.read(id)).isNull();
+        assertThat(persist.read(id)).isNull();
 
         // Act
         xStateMachineService.create(id);
 
         // Asserts
         StateMachineContext<States, Events> persistedMachine = persist.read(id);
-        Assertions.assertThat(persistedMachine.getId()).isEqualTo(id.toString());
+        assertThat(persistedMachine.getId()).isEqualTo(id.toString());
     }
 
     //TODO: check getting from a factory and updating machine after create from service
@@ -113,10 +116,10 @@ public class XStateMachineServiceImplTest {
     public void testGet() {
         // Arrange
         // Act
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
 
         // Asserts
-        Assertions.assertThat(machine.getId()).isEqualTo(mockMachine.getId());
+        assertThat(machine.getId()).isEqualTo(mockMachine.getId());
         //TODO: assert an equality of machines in more details
     }
 
@@ -134,36 +137,36 @@ public class XStateMachineServiceImplTest {
     @Test
     public void testUpdateBehavior() {
         // Arrange
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
         machine.sendEvent(Events.START_FEATURE);
         // Check precondition
-        Assertions.assertThat(machine.getState().getId()).isEqualTo(States.IN_PROGRESS);
+        assertThat(machine.getState().getId()).isEqualTo(States.IN_PROGRESS);
 
         // Act
-        StateMachine<States, Events> returnedMachine = xStateMachineService.update(PERSISTED_ID, machine);
+        StateMachine<States, Events> returnedMachine = xStateMachineService.update(PERSISTED_MACHINE_ID, machine);
 
         // Asserts
-        Assertions.assertThat(returnedMachine).isNotNull();
-        Assertions.assertThat(returnedMachine.getState().getId()).isEqualTo(States.IN_PROGRESS);
+        assertThat(returnedMachine).isNotNull();
+        assertThat(returnedMachine.getState().getId()).isEqualTo(States.IN_PROGRESS);
         // Check a machine in the storage
-        StateMachine<States, Events> machineAfterCommit = xStateMachineService.get(PERSISTED_ID);
-        Assertions.assertThat(machineAfterCommit.getState().getId()).isEqualTo(States.IN_PROGRESS);
+        StateMachine<States, Events> machineAfterCommit = xStateMachineService.get(PERSISTED_MACHINE_ID);
+        assertThat(machineAfterCommit.getState().getId()).isEqualTo(States.IN_PROGRESS);
     }
 
     @Test
     public void testUpdateInternal() throws Exception {
         // Arrange
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
         machine.sendEvent(Events.START_FEATURE);
         StateMachineContext<States, Events> machineContext =
                 StateMachineContextEvaluator.getContext(machine);
 
         // Act
-        xStateMachineService.update(PERSISTED_ID, machine);
+        xStateMachineService.update(PERSISTED_MACHINE_ID, machine);
 
         // Asserts
-        StateMachineContext<States, Events> actualContext = persist.read(PERSISTED_ID);
-        Assertions.assertThat(actualContext).isEqualToComparingFieldByFieldRecursively(machineContext);
+        StateMachineContext<States, Events> actualContext = persist.read(PERSISTED_MACHINE_ID);
+        assertThat(actualContext).isEqualToComparingFieldByFieldRecursively(machineContext);
     }
 
     @Test
@@ -171,24 +174,24 @@ public class XStateMachineServiceImplTest {
         // Arrange
         // Act
         States initialState =
-                xStateMachineService.evaluate(PERSISTED_ID,
+                xStateMachineService.evaluate(PERSISTED_MACHINE_ID,
                                               stateMachine -> stateMachine.getState().getId());
 
         // Asserts
-        Assertions.assertThat(initialState).isEqualTo(States.BACKLOG);
+        assertThat(initialState).isEqualTo(States.BACKLOG);
     }
 
     @Test
     public void testEvaluateWithChangeState() {
 
         // Act
-        StateMachine<States, Events> machine = xStateMachineService.evaluate(PERSISTED_ID, stateMachine -> {
+        StateMachine<States, Events> machine = xStateMachineService.evaluate(PERSISTED_MACHINE_ID, stateMachine -> {
             stateMachine.sendEvent(Events.START_FEATURE);
             return stateMachine;
         });
 
         // Read a result from the storage
-        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_MACHINE_ID);
 
         // Asserts
         assertThatMachinesEqual(machine, persistedMachine);
@@ -204,15 +207,15 @@ public class XStateMachineServiceImplTest {
         };
 
         // Act
-        GuardCheck.check(() -> xStateMachineService.evaluate(PERSISTED_ID, func),
+        GuardCheck.check(() -> xStateMachineService.evaluate(PERSISTED_MACHINE_ID, func),
                          NotFoundException.class,
                          PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
 
 
         // Read a result from the storage
-        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_MACHINE_ID);
         // Asserts
-        Assertions.assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
+        assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
     }
 
     /**
@@ -225,7 +228,7 @@ public class XStateMachineServiceImplTest {
         Function<StateMachine<States, Events>, String> processingFunc = stateMachine -> {
             stateMachine.sendEvent(Events.START_FEATURE);
             try {
-                persister.persist(stateMachine, PERSISTED_ID);
+                persister.persist(stateMachine, PERSISTED_MACHINE_ID);
             } catch (Exception e) {
                 e.printStackTrace();
                 Assertions.fail(e.getMessage());
@@ -235,15 +238,15 @@ public class XStateMachineServiceImplTest {
         };
 
         // Act
-        GuardCheck.check(() -> xStateMachineService.evaluate(PERSISTED_ID, processingFunc),
+        GuardCheck.check(() -> xStateMachineService.evaluate(PERSISTED_MACHINE_ID, processingFunc),
                          NotFoundException.class,
                          PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
 
 
         // Read a result from the storage
-        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_MACHINE_ID);
         // Asserts
-        Assertions.assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
+        assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
     }
 
 
@@ -254,7 +257,7 @@ public class XStateMachineServiceImplTest {
         Exception actualException = null;
         try {
             StateMachine<States, Events> machine = xStateMachineService
-                    .evaluateTransactional(PERSISTED_ID, stateMachine -> {
+                    .evaluateTransactional(PERSISTED_MACHINE_ID, stateMachine -> {
                         stateMachine.sendEvent(Events.START_FEATURE);
                         testService.ok();
                         testService.fail();
@@ -265,18 +268,18 @@ public class XStateMachineServiceImplTest {
         }
 
         // Asserts
-        Assertions.assertThat(actualException.getMessage())
-                  .contains("not-null property references a null or transient value");
-        Assertions.assertThat(actualException)
-                  .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(actualException.getMessage())
+                .contains("not-null property references a null or transient value");
+        assertThat(actualException)
+                .isInstanceOf(DataIntegrityViolationException.class);
 
         // Read a result from the storage
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
 
-        Assertions.assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
+        assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
 
         // Check that entity not save in database
-        Assertions.assertThat(testService.size()).isEqualTo(0);
+        assertThat(testService.size()).isEqualTo(0);
     }
 
     @Test
@@ -284,23 +287,23 @@ public class XStateMachineServiceImplTest {
 
         // Act
         StateMachine<States, Events> machine = xStateMachineService
-                .evaluateTransactional(PERSISTED_ID, stateMachine -> {
+                .evaluateTransactional(PERSISTED_MACHINE_ID, stateMachine -> {
                     stateMachine.sendEvent(Events.START_FEATURE);
                     testService.ok();
                     return stateMachine;
                 });
 
         // Read a machine from the storage
-        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_MACHINE_ID);
 
         // Asserts
-        Assertions.assertThat(machine.getState().getId())
-                  .isEqualTo(States.IN_PROGRESS);
+        assertThat(machine.getState().getId())
+                .isEqualTo(States.IN_PROGRESS);
 
         assertThatMachinesEqual(persistedMachine, machine);
 
         // Check that entity not save in database
-        Assertions.assertThat(testService.size()).isEqualTo(1);
+        assertThat(testService.size()).isEqualTo(1);
     }
 
 
@@ -311,10 +314,10 @@ public class XStateMachineServiceImplTest {
         Exception actualException = null;
         try {
             StateMachine<States, Events> machine = xStateMachineService
-                    .evaluateTransactional(PERSISTED_ID, stateMachine -> {
+                    .evaluateTransactional(PERSISTED_MACHINE_ID, stateMachine -> {
                         stateMachine.sendEvent(Events.START_FEATURE);
                         try {
-                            persister.persist(stateMachine, PERSISTED_ID);
+                            persister.persist(stateMachine, PERSISTED_MACHINE_ID);
                         } catch (Exception e) {
                             e.printStackTrace();
                             Assertions.fail(e.getMessage());
@@ -328,18 +331,31 @@ public class XStateMachineServiceImplTest {
         }
 
         // Asserts
-        Assertions.assertThat(actualException.getMessage())
-                  .contains("not-null property references a null or transient value");
-        Assertions.assertThat(actualException)
-                  .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(actualException.getMessage())
+                .contains("not-null property references a null or transient value");
+        assertThat(actualException)
+                .isInstanceOf(DataIntegrityViolationException.class);
 
         // Read a result from the storage
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_ID);
+        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
 
-        Assertions.assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
+        assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
 
         // Check that entity not save in database
-        Assertions.assertThat(testService.size()).isEqualTo(0);
+        assertThat(testService.size()).isEqualTo(0);
+    }
+
+
+    @Test
+    public void testRetrieveAvailableEvents() {
+        // Act
+        List<Events> availableEvents = xStateMachineService.retrieveAvailableEvents(PERSISTED_MACHINE_ID);
+        // Asserts
+        assertThat(availableEvents)
+                .containsOnly(Events.START_FEATURE,
+                              Events.ROCK_STAR_DOUBLE_TASK,
+                              Events.DEPLOY,
+                              Events.INCREMENT);
     }
 
     private void assertThatMachinesEqual(StateMachine<States, Events> firstMachine,
@@ -352,6 +368,6 @@ public class XStateMachineServiceImplTest {
                 StateMachineContextEvaluator.getContext(secondMachine);
 
         // Assert
-        Assertions.assertThat(firstContext).isEqualToComparingFieldByFieldRecursively(secondContext);
+        assertThat(firstContext).isEqualToComparingFieldByFieldRecursively(secondContext);
     }
 }
