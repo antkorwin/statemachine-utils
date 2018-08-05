@@ -1,6 +1,7 @@
 package com.antkorwin.statemachineutils.service;
 
 import com.antkorwin.statemachineutils.persist.DefaultPersistConfig;
+import com.antkorwin.statemachineutils.resolver.EnableStateMachineResolver;
 import com.antkorwin.statemachineutils.resolver.StateMachineResolver;
 import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
@@ -20,6 +21,7 @@ import java.util.UUID;
  */
 @Configuration
 @EnableStateMachineWrapper
+@EnableStateMachineResolver
 @Import(DefaultPersistConfig.class)
 public class XServiceConfig {
 
