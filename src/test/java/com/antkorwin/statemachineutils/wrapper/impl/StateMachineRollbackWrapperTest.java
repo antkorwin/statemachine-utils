@@ -38,7 +38,7 @@ import static org.mockito.Mockito.mock;
 @EnableStateMachineWrapper
 public class StateMachineRollbackWrapperTest {
 
-    public static final int ITERATION_NUMBER = 100000;
+    public static final int ITERATION_NUMBER = 1000;
 
     @Autowired
     private StateMachineFactory<States, Events> stateMachineFactory;
