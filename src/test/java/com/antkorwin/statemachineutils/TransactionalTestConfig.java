@@ -27,7 +27,7 @@ import javax.persistence.Id;
  */
 @TestConfiguration
 @EnableJpaRepositories(considerNestedRepositories = true)
-@EntityScan("com.antkorwin.statemachineutils")
+//@EntityScan("com.antkorwin.statemachineutils")
 public class TransactionalTestConfig {
 
     @Repository

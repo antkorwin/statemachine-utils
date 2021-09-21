@@ -1,18 +1,23 @@
 package com.antkorwin.statemachineutils.service;
 
-import com.antkorwin.commonutils.exceptions.BaseException;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import com.antkorwin.statemachineutils.resolver.StateMachineResolver;
+import com.antkorwin.statemachineutils.service.usecases.CreateStateMachineUseCase;
+import com.antkorwin.statemachineutils.service.usecases.GetStateMachineUseCase;
+import com.antkorwin.statemachineutils.service.usecases.UpdateStateMachineUseCase;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.statemachine.StateMachine;
+import org.springframework.statemachine.StateMachinePersist;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Function;
-
-import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.*;
+import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE;
 
 /**
  * Created on 09.07.2018.
@@ -20,96 +25,81 @@ import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.*;
  * @author Korovin Anatoliy
  */
 @Slf4j
+@RequiredArgsConstructor
 public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachineService<StatesT, EventsT> {
 
-    private final StateMachineWrapper<StatesT, EventsT> rollbackWrapper;
-    private final StateMachineWrapper<StatesT, EventsT> transactionalWrapper;
-    private final StateMachinePersister<StatesT, EventsT, UUID> persister;
-    private final StateMachineFactory<StatesT, EventsT> factory;
-    private final StateMachineResolver<StatesT, EventsT> resolver;
+	private final CreateStateMachineUseCase<StatesT, EventsT> createStateMachineUseCase;
+	private final GetStateMachineUseCase<StatesT, EventsT> getStateMachineUseCase;
+	private final UpdateStateMachineUseCase<StatesT, EventsT> updateStateMachineUseCase;
 
-    public XStateMachineServiceImpl(
-            StateMachineWrapper<StatesT, EventsT> rollbackWrapper,
-            StateMachineWrapper<StatesT, EventsT> transactionalWrapper,
-            StateMachinePersister<StatesT, EventsT, UUID> persister,
-            StateMachineFactory<StatesT, EventsT> factory,
-            StateMachineResolver<StatesT, EventsT> resolver) {
-        this.rollbackWrapper = rollbackWrapper;
-        this.transactionalWrapper = transactionalWrapper;
-        this.persister = persister;
-        this.factory = factory;
-        this.resolver = resolver;
-    }
+	@Override
+	public StateMachine<StatesT, EventsT> create(String machineId) {
+		return createStateMachineUseCase.create(machineId);
+	}
 
-    @Override
-    public StateMachine<StatesT, EventsT> create(UUID machineId) {
-        log.debug("Creating new machine from factory with id " + machineId);
-        StateMachine<StatesT, EventsT> machine = factory.getStateMachine(machineId.toString());
-        try {
-            persister.persist(machine, machineId);
-            return machine;
-        } catch (Exception e) {
-            log.error("Unable to persist new state machine : " + machineId.toString(), e);
-            throw new XStateMachineException(UNABLE_TO_PERSIST_NEW_STATE_MACHINE, e);
-        }
-    }
+	@Override
+	public StateMachine<StatesT, EventsT> create() {
+		return createStateMachineUseCase.create();
+	}
 
-    @Override
-    public StateMachine<StatesT, EventsT> get(UUID machineId) {
-        log.debug("Getting a new machine from factory with id " + machineId);
-        StateMachine<StatesT, EventsT> machine = factory.getStateMachine(machineId.toString());
-        try {
-            return persister.restore(machine, machineId);
-        } catch (BaseException baseExc) {
-            throw baseExc;
-        } catch (Exception e) {
-            log.error("Error while restore state machine", e);
-            throw new XStateMachineException(UNABLE_TO_READ_STATE_MACHINE_FROM_STORE, e);
-        }
-    }
+	@Override
+	public StateMachine<StatesT, EventsT> createAndRun(String machineId,
+	                                                   Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+		return createStateMachineUseCase.createAndRun(machineId, processingFunction);
+	}
 
-    @Override
-    public StateMachine<StatesT, EventsT> update(UUID machineId, StateMachine<StatesT, EventsT> machine) {
-        try {
-            persister.persist(machine, machineId);
-            return machine;
-        } catch (Exception e) {
-            log.error("unable to persist the state machine during the update: " + machineId.toString(), e);
-            throw new XStateMachineException(UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE, e);
-        }
-    }
+	@Override
+	public StateMachine<StatesT, EventsT> createAndRunTransactional(String machineId,
+	                                                                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+		return createStateMachineUseCase.createAndRunTransactional(machineId, processingFunction);
+	}
 
-    @Override
-    public <ResultT> ResultT evaluate(UUID stateMachineId,
-                                      Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+	@Override
+	public StateMachine<StatesT, EventsT> get(String machineId) {
+		return getStateMachineUseCase.get(machineId);
+	}
 
-        return internalEvaluate(stateMachineId, processingFunction, rollbackWrapper);
-    }
+	@Override
+	public boolean isExist(String machineId) {
+		return getStateMachineUseCase.isExist(machineId);
+	}
 
-    @Override
-    public <ResultT> ResultT evaluateTransactional(UUID stateMachineId,
-                                                   Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+	@Override
+	public List<EventsT> retrieveAvailableEvents(String stateMachineId) {
+		return getStateMachineUseCase.retrieveAvailableEvents(get(stateMachineId));
+	}
 
-        return internalEvaluate(stateMachineId, processingFunction, transactionalWrapper);
-    }
+	@Override
+	public List<EventsT> retrieveAvailableEvents(StateMachine<StatesT, EventsT> machine) {
+		return getStateMachineUseCase.retrieveAvailableEvents(machine);
+	}
 
-    @Override
-    public List<EventsT> retrieveAvailableEvents(UUID stateMachineId) {
-        return resolver.getAvailableEvents(get(stateMachineId));
-    }
+	@Override
+	public <ResultT> ResultT evaluate(String stateMachineId,
+	                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+		return updateStateMachineUseCase.evaluate(stateMachineId, processingFunction);
+	}
 
-    private <ResultT> ResultT internalEvaluate(UUID machineId,
-                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction,
-                                               StateMachineWrapper<StatesT, EventsT> wrapper) {
+	@Override
+	public <ResultT> ResultT evaluate(StateMachine<StatesT, EventsT> machine,
+	                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+		return updateStateMachineUseCase.evaluate(machine, processingFunction);
+	}
 
-        StateMachine<StatesT, EventsT> machine = get(machineId);
-        try {
-            ResultT result = wrapper.evaluateWithRollback(machine, processingFunction);
-            update(machineId, machine);
-            return result;
-        } catch (Exception e) {
-            update(machineId, machine); // persist old version of a roll-backed S.M.
-            throw e;
-        }
-    }
+	@Override
+	public <ResultT> ResultT evaluateTransactional(String stateMachineId,
+	                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+		return updateStateMachineUseCase.evaluateTransactional(stateMachineId, processingFunction);
+	}
+
+	@Override
+	public <ResultT> ResultT evaluateTransactional(StateMachine<StatesT, EventsT> machine,
+	                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
+		return updateStateMachineUseCase.evaluateTransactional(machine, processingFunction);
+	}
+
+	@Override
+	public StateMachine<StatesT, EventsT> update(String machineId, StateMachine<StatesT, EventsT> machine) {
+		return updateStateMachineUseCase.update(machineId, machine);
+	}
 }

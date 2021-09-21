@@ -21,13 +21,13 @@ public class DefaultPersistConfig {
 
     @Bean
     @ConditionalOnMissingBean
-    public <StatesT, EventsT> StateMachinePersist<StatesT, EventsT, UUID> persist() {
-        return new InMemoryStateMachinePersist();
+    public <StatesT, EventsT, IdentifierT> StateMachinePersist<StatesT, EventsT, IdentifierT> persist() {
+        return new InMemoryStateMachinePersist<>();
     }
 
     @Bean
-    public <StatesT, EventsT> StateMachinePersister<StatesT, EventsT, UUID> persister(
-            StateMachinePersist<StatesT, EventsT, UUID> defaultPersist) throws Exception {
+    public <StatesT, EventsT, IdentifierT> StateMachinePersister<StatesT, EventsT, IdentifierT> persister(
+            StateMachinePersist<StatesT, EventsT, IdentifierT> defaultPersist) throws Exception {
 
         return new DefaultStateMachinePersisterDecorator<>(defaultPersist);
     }

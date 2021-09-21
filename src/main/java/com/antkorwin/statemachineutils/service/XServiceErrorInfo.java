@@ -12,7 +12,9 @@ public enum XServiceErrorInfo implements ErrorInfo {
 
     UNABLE_TO_PERSIST_NEW_STATE_MACHINE("Unable to persist new state machine."),
     UNABLE_TO_READ_STATE_MACHINE_FROM_STORE("Unable to read state machine from storage."),
-    UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE("Unable to persist the state machine during the update");
+    UNABLE_TO_FETCH_STATE_MACHINE_FROM_PERSIST("Unable to fetch a state machine from persist storage."),
+    UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE("Unable to persist the state machine during the update"),
+    UNABLE_TO_PERSIST_STATE_MACHINE("Unable to persist the state machine");
 
     private static final int BASE = 3000;
     private final String message;

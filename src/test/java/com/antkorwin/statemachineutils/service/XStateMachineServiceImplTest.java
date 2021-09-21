@@ -43,19 +43,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableStateMachineWrapper
 public class XStateMachineServiceImplTest {
 
-    private static final UUID PERSISTED_MACHINE_ID = UUID.randomUUID();
+    private static final String PERSISTED_MACHINE_ID = UUID.randomUUID().toString();
 
     @Autowired
     private XStateMachineService<States, Events> xStateMachineService;
 
     @Autowired
-    private StateMachinePersist<States, Events, UUID> persist;
+    private StateMachinePersist<States, Events, String> persist;
 
     @Autowired
     private StateMachineFactory<States, Events> factory;
 
     @Autowired
-    private StateMachinePersister<States, Events, UUID> persister;
+    private StateMachinePersister<States, Events, String> persister;
 
     private StateMachine<States, Events> mockMachine;
 
@@ -85,7 +85,7 @@ public class XStateMachineServiceImplTest {
         UUID id = UUID.randomUUID();
 
         // Act
-        StateMachine<States, Events> machine = xStateMachineService.create(id);
+        StateMachine<States, Events> machine = xStateMachineService.create(id.toString());
 
         // Asserts
         assertThat(machine).isNotNull();
@@ -98,13 +98,13 @@ public class XStateMachineServiceImplTest {
         UUID id = UUID.randomUUID();
 
         // Check precondition
-        assertThat(persist.read(id)).isNull();
+        assertThat(persist.read(id.toString())).isNull();
 
         // Act
-        xStateMachineService.create(id);
+        xStateMachineService.create(id.toString());
 
         // Asserts
-        StateMachineContext<States, Events> persistedMachine = persist.read(id);
+        StateMachineContext<States, Events> persistedMachine = persist.read(id.toString());
         assertThat(persistedMachine.getId()).isEqualTo(id.toString());
     }
 
@@ -124,12 +124,24 @@ public class XStateMachineServiceImplTest {
     }
 
     @Test
+    public void testExist() {
+        // Act & assert
+        assertThat(xStateMachineService.isExist(PERSISTED_MACHINE_ID)).isTrue();
+    }
+
+    @Test
+    public void testNotExist() {
+        // Act & assert
+        assertThat(xStateMachineService.isExist(UUID.randomUUID().toString())).isFalse();
+    }
+
+    @Test
     public void testGetWithWrongId() {
         // Arrange
         UUID id = UUID.randomUUID();
 
         // Act
-        GuardCheck.check(() -> xStateMachineService.get(id),
+        GuardCheck.check(() -> xStateMachineService.get(id.toString()),
                          NotFoundException.class,
                          PersisterErrorInfo.COULD_NOT_READ_STATEMACHINE_FROM_PERSIST);
     }

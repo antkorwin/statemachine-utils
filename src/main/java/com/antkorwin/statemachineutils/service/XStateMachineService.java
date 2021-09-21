@@ -4,6 +4,7 @@ import org.springframework.statemachine.StateMachine;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -17,12 +18,21 @@ public interface XStateMachineService<StatesT, EventsT> {
      * Create a state machine instance and persist it
      * in the state machine persist-storage.
      *
-     * @param machineId identifier of the S.M.
+     * @param machineId UUID identifier of the S.M.
      * @return created state machine instance
      */
-    StateMachine<StatesT, EventsT> create(UUID machineId);
+    StateMachine<StatesT, EventsT> create(String machineId);
 
-    /**
+
+    StateMachine<StatesT, EventsT> create();
+
+	StateMachine<StatesT, EventsT> createAndRun(String machineId,
+	                                            Consumer<StateMachine<StatesT, EventsT>> processingFunction);
+
+	StateMachine<StatesT, EventsT> createAndRunTransactional(String machineId,
+	                                                         Consumer<StateMachine<StatesT, EventsT>> processingFunction);
+
+	/**
      * Load an instance of a state machine form the
      * state machine persist-storage.
      *
@@ -31,19 +41,20 @@ public interface XStateMachineService<StatesT, EventsT> {
      * @param id identity of the S.M.
      * @return state machine instance
      */
-    StateMachine<StatesT, EventsT> get(UUID id);
+    StateMachine<StatesT, EventsT> get(String id);
 
-    /**
-     * Update the S.M. in persist-storage by identifier of an existing
-     * machine and its instance that we need to save in storage.
-     *
-     * Throws an exception if doesn't find S.M. in storage by identifier.
-     *
-     * @param machineId identifier of the S.M.
-     * @param machine   actual state of the S.M. that will save in storage
-     * @return actual state machine instance
-     */
-    StateMachine<StatesT, EventsT> update(UUID machineId, StateMachine<StatesT, EventsT> machine);
+
+	List<EventsT> retrieveAvailableEvents(StateMachine<StatesT, EventsT> machine);
+
+	<ResultT> ResultT evaluate(StateMachine<StatesT, EventsT> machine,
+	                           Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
+
+	<ResultT> ResultT evaluateTransactional(StateMachine<StatesT, EventsT> machine,
+	                                        Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
+
+	StateMachine<StatesT, EventsT> update(String machineId, StateMachine<StatesT, EventsT> machine);
+
+    boolean isExist(String machineId);
 
     /**
      * Try to evaluate a result of processing function
@@ -60,7 +71,7 @@ public interface XStateMachineService<StatesT, EventsT> {
      * @param <ResultT>          result of the function
      * @return result of the function
      */
-    <ResultT> ResultT evaluate(UUID stateMachineId,
+    <ResultT> ResultT evaluate(String stateMachineId,
                                Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 
     /**
@@ -77,7 +88,7 @@ public interface XStateMachineService<StatesT, EventsT> {
      * @param <ResultT>          result of the function
      * @return result of the function
      */
-    <ResultT> ResultT evaluateTransactional(UUID stateMachineId,
+    <ResultT> ResultT evaluateTransactional(String stateMachineId,
                                             Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 
     /**
@@ -86,5 +97,5 @@ public interface XStateMachineService<StatesT, EventsT> {
      * @param stateMachineId identifier of the state machine
      * @return list of available events for the current state of the state machine
      */
-    List<EventsT> retrieveAvailableEvents(UUID stateMachineId);
+    List<EventsT> retrieveAvailableEvents(String stateMachineId);
 }
