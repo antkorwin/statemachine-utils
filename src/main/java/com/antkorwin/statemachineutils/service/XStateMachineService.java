@@ -52,6 +52,18 @@ public interface XStateMachineService<StatesT, EventsT> {
 	<ResultT> ResultT evaluateTransactional(StateMachine<StatesT, EventsT> machine,
 	                                        Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 
+	void run(String stateMachineId,
+	         Consumer<StateMachine<StatesT, EventsT>> processingFunction);
+
+	void run(StateMachine<StatesT, EventsT> stateMachine,
+	         Consumer<StateMachine<StatesT, EventsT>> processingFunction);
+
+	void runTransactional(String stateMachineId,
+	                      Consumer<StateMachine<StatesT, EventsT>> processingFunction);
+
+	void runTransactional(StateMachine<StatesT, EventsT> stateMachine,
+	                      Consumer<StateMachine<StatesT, EventsT>> processingFunction);
+
 	StateMachine<StatesT, EventsT> update(String machineId, StateMachine<StatesT, EventsT> machine);
 
     boolean isExist(String machineId);

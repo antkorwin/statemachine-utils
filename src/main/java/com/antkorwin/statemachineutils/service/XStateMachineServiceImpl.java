@@ -4,20 +4,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.antkorwin.statemachineutils.resolver.StateMachineResolver;
 import com.antkorwin.statemachineutils.service.usecases.CreateStateMachineUseCase;
 import com.antkorwin.statemachineutils.service.usecases.GetStateMachineUseCase;
 import com.antkorwin.statemachineutils.service.usecases.UpdateStateMachineUseCase;
-import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.statemachine.StateMachine;
-import org.springframework.statemachine.StateMachinePersist;
-import org.springframework.statemachine.config.StateMachineFactory;
-import org.springframework.statemachine.persist.StateMachinePersister;
-
-import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_TO_PERSIST_STATE_MACHINE_DURING_UPDATE;
 
 /**
  * Created on 09.07.2018.
@@ -32,6 +25,7 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 	private final GetStateMachineUseCase<StatesT, EventsT> getStateMachineUseCase;
 	private final UpdateStateMachineUseCase<StatesT, EventsT> updateStateMachineUseCase;
 
+	//region CREATE
 	@Override
 	public StateMachine<StatesT, EventsT> create(String machineId) {
 		return createStateMachineUseCase.create(machineId);
@@ -53,7 +47,9 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 	                                                                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
 		return createStateMachineUseCase.createAndRunTransactional(machineId, processingFunction);
 	}
+	//endregion CREATE
 
+	//region GET
 	@Override
 	public StateMachine<StatesT, EventsT> get(String machineId) {
 		return getStateMachineUseCase.get(machineId);
@@ -73,7 +69,9 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 	public List<EventsT> retrieveAvailableEvents(StateMachine<StatesT, EventsT> machine) {
 		return getStateMachineUseCase.retrieveAvailableEvents(machine);
 	}
+	//endregion GET
 
+	//region UPDATE
 	@Override
 	public <ResultT> ResultT evaluate(String stateMachineId,
 	                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
@@ -99,7 +97,52 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 	}
 
 	@Override
+	public void run(String stateMachineId,
+	                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+
+		updateStateMachineUseCase.evaluate(stateMachineId,
+		                                   machine -> {
+			                                   processingFunction.accept(machine);
+			                                   return true;
+		                                   });
+	}
+
+	@Override
+	public void run(StateMachine<StatesT, EventsT> stateMachine,
+	                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+
+		updateStateMachineUseCase.evaluate(stateMachine,
+		                                   machine -> {
+			                                   processingFunction.accept(machine);
+			                                   return true;
+		                                   });
+	}
+
+	@Override
+	public void runTransactional(String stateMachineId,
+	                                          Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+
+		updateStateMachineUseCase.evaluateTransactional(stateMachineId,
+		                                                machine -> {
+			                                                processingFunction.accept(machine);
+			                                                return true;
+		                                                });
+	}
+
+	@Override
+	public void runTransactional(StateMachine<StatesT, EventsT> stateMachine,
+	                                          Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
+
+		updateStateMachineUseCase.evaluateTransactional(stateMachine,
+		                                                machine -> {
+			                                                processingFunction.accept(machine);
+			                                                return true;
+		                                                });
+	}
+
+	@Override
 	public StateMachine<StatesT, EventsT> update(String machineId, StateMachine<StatesT, EventsT> machine) {
 		return updateStateMachineUseCase.update(machineId, machine);
 	}
+	//region UPDATE
 }

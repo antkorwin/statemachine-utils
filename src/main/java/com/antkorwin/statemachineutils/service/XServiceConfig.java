@@ -55,9 +55,6 @@ public class XServiceConfig {
 				new UpdateStateMachineUseCase<>(stateMachineRollbackWrapper,
 				                                stateMachineTransactionalWrapper,
 				                                persister,
-				                                persist,
-				                                stateMachineFactory,
-				                                resolver,
 				                                getStateMachineUseCase);
 
 		return new XStateMachineServiceImpl<>(createStateMachineUseCase,

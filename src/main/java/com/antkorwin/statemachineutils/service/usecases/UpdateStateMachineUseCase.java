@@ -1,12 +1,10 @@
 package com.antkorwin.statemachineutils.service.usecases;
 
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.antkorwin.statemachineutils.resolver.StateMachineResolver;
 import com.antkorwin.statemachineutils.service.XStateMachineException;
-import com.antkorwin.statemachineutils.service.XStateMachineService;
 import com.antkorwin.statemachineutils.wrapper.StateMachineWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +28,6 @@ public class UpdateStateMachineUseCase<StatesT, EventsT> {
 	private final StateMachineWrapper<StatesT, EventsT> rollbackWrapper;
 	private final StateMachineWrapper<StatesT, EventsT> transactionalWrapper;
 	private final StateMachinePersister<StatesT, EventsT, String> persister;
-	private final StateMachinePersist<StatesT, EventsT, String> persist;
-	private final StateMachineFactory<StatesT, EventsT> factory;
-	private final StateMachineResolver<StatesT, EventsT> resolver;
-
 	private final GetStateMachineUseCase<StatesT, EventsT> getStateMachineUseCase;
 
 
