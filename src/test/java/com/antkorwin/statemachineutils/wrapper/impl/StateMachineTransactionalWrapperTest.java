@@ -15,11 +15,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorInfo.PROCESSING_FUNCTION_IS_MANDATORY_ARGUMENT;
@@ -36,10 +38,10 @@ import static org.mockito.Mockito.mock;
 @RunWith(SpringRunner.class)
 @Import({StateMachineConfig.class, TransactionalTestConfig.class})
 @EnableStateMachineWrapper
+@TestPropertySource(properties = "antkorwin.statemachine.rollback=transactional")
 public class StateMachineTransactionalWrapperTest {
 
     @Autowired
-    @Qualifier("stateMachineTransactionalWrapper")
     private StateMachineWrapper<States, Events> stateMachineTransactionalWrapper;
 
     @Autowired

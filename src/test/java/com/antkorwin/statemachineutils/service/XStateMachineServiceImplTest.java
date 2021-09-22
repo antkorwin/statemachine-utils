@@ -12,6 +12,7 @@ import com.antkorwin.statemachineutils.wrapper.EnableStateMachineWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -260,103 +261,6 @@ public class XStateMachineServiceImplTest {
         // Asserts
         assertThat(persistedMachine.getState().getId()).isEqualTo(States.BACKLOG);
     }
-
-
-    @Test
-    public void testEvaluateTransactionalWithChangeStateAndFailOnTransactionCommit() {
-
-        // Act
-        Exception actualException = null;
-        try {
-            StateMachine<States, Events> machine = xStateMachineService
-                    .evaluateTransactional(PERSISTED_MACHINE_ID, stateMachine -> {
-                        stateMachine.sendEvent(Events.START_FEATURE);
-                        testService.ok();
-                        testService.fail();
-                        return stateMachine;
-                    });
-        } catch (Exception e) {
-            actualException = e;
-        }
-
-        // Asserts
-        assertThat(actualException.getMessage())
-                .contains("not-null property references a null or transient value");
-        assertThat(actualException)
-                .isInstanceOf(DataIntegrityViolationException.class);
-
-        // Read a result from the storage
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
-
-        assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
-
-        // Check that entity not save in database
-        assertThat(testService.size()).isEqualTo(0);
-    }
-
-    @Test
-    public void testEvaluateTransactionalSuccess() {
-
-        // Act
-        StateMachine<States, Events> machine = xStateMachineService
-                .evaluateTransactional(PERSISTED_MACHINE_ID, stateMachine -> {
-                    stateMachine.sendEvent(Events.START_FEATURE);
-                    testService.ok();
-                    return stateMachine;
-                });
-
-        // Read a machine from the storage
-        StateMachine<States, Events> persistedMachine = xStateMachineService.get(PERSISTED_MACHINE_ID);
-
-        // Asserts
-        assertThat(machine.getState().getId())
-                .isEqualTo(States.IN_PROGRESS);
-
-        assertThatMachinesEqual(persistedMachine, machine);
-
-        // Check that entity not save in database
-        assertThat(testService.size()).isEqualTo(1);
-    }
-
-
-    @Test
-    public void testEvaluateWithRollbackWhileTryingToPersistMachineInProcessingFunction() {
-
-        // Act
-        Exception actualException = null;
-        try {
-            StateMachine<States, Events> machine = xStateMachineService
-                    .evaluateTransactional(PERSISTED_MACHINE_ID, stateMachine -> {
-                        stateMachine.sendEvent(Events.START_FEATURE);
-                        try {
-                            persister.persist(stateMachine, PERSISTED_MACHINE_ID);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            Assertions.fail(e.getMessage());
-                        }
-                        testService.ok();
-                        testService.fail();
-                        return stateMachine;
-                    });
-        } catch (Exception e) {
-            actualException = e;
-        }
-
-        // Asserts
-        assertThat(actualException.getMessage())
-                .contains("not-null property references a null or transient value");
-        assertThat(actualException)
-                .isInstanceOf(DataIntegrityViolationException.class);
-
-        // Read a result from the storage
-        StateMachine<States, Events> machine = xStateMachineService.get(PERSISTED_MACHINE_ID);
-
-        assertThat(machine.getState().getId()).isEqualTo(States.BACKLOG);
-
-        // Check that entity not save in database
-        assertThat(testService.size()).isEqualTo(0);
-    }
-
 
     @Test
     public void testRetrieveAvailableEvents() {

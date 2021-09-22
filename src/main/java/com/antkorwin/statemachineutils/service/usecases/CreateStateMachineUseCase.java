@@ -22,7 +22,6 @@ public class CreateStateMachineUseCase<StatesT, EventsT> {
 	private final StateMachinePersister<StatesT, EventsT, String> persister;
 	private final StateMachineFactory<StatesT, EventsT> factory;
 	private final StateMachineWrapper<StatesT, EventsT> rollbackWrapper;
-	private final StateMachineWrapper<StatesT, EventsT> transactionalWrapper;
 
 
 	public StateMachine<StatesT, EventsT> create(String machineId) {
@@ -38,13 +37,6 @@ public class CreateStateMachineUseCase<StatesT, EventsT> {
 	                                                             Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
 		StateMachine<StatesT, EventsT> machine = create(machineId);
 		internalEvaluate(machine, processingFunction, rollbackWrapper);
-		return machine;
-	}
-
-	public StateMachine<StatesT, EventsT> createAndRunTransactional(String machineId,
-	                                                                          Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
-		StateMachine<StatesT, EventsT> machine = create(machineId);
-		internalEvaluate(machine, processingFunction, transactionalWrapper);
 		return machine;
 	}
 

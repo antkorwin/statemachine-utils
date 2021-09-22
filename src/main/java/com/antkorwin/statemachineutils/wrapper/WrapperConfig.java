@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * Created on 20.06.2018.
@@ -24,17 +25,16 @@ public class WrapperConfig {
 	}
 
 	@Bean("stateMachineRollbackWrapper")
-//	@ConditionalOnMissingBean
-	public StateMachineWrapper stateMachineWrapper(XSync<String> stateMachineXSync) {
+	@ConditionalOnProperty(name = "antkorwin.statemachine.rollback", havingValue = "default", matchIfMissing = true)
+	public <StatesT, EventsT> StateMachineWrapper<StatesT, EventsT> stateMachineWrapper(XSync<String> stateMachineXSync) {
 		return new StateMachineRollbackWrapper<>(stateMachineXSync);
 	}
 
-	@Bean("stateMachineTransactionalWrapper")
-//	@ConditionalOnProperty(value = "antkorwin.statemachine.rollback", havingValue = "transactional")
-	public <StatesT, EventsT> StateMachineWrapper stateMachineTransactionalWrapper(
-			@Qualifier("stateMachineRollbackWrapper")
-					StateMachineWrapper<StatesT, EventsT> stateMachineRollbackWrapper) {
-
-		return new StateMachineTransactionalWrapper<>(stateMachineRollbackWrapper);
+	@Primary
+	@Bean("stateMachineRollbackWrapper")
+	@ConditionalOnProperty(value = "antkorwin.statemachine.rollback", havingValue = "transactional")
+	public <StatesT, EventsT> StateMachineWrapper<StatesT, EventsT> stateMachineTransactionalWrapper(XSync<String> stateMachineXSync) {
+		StateMachineRollbackWrapper<StatesT, EventsT> rollbackWrapper = new StateMachineRollbackWrapper<>(stateMachineXSync);
+		return new StateMachineTransactionalWrapper<>(rollbackWrapper);
 	}
 }

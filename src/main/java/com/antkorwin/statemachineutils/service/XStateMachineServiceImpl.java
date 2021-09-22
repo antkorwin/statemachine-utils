@@ -41,12 +41,6 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 	                                                   Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
 		return createStateMachineUseCase.createAndRun(machineId, processingFunction);
 	}
-
-	@Override
-	public StateMachine<StatesT, EventsT> createAndRunTransactional(String machineId,
-	                                                                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
-		return createStateMachineUseCase.createAndRunTransactional(machineId, processingFunction);
-	}
 	//endregion CREATE
 
 	//region GET
@@ -85,18 +79,6 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 	}
 
 	@Override
-	public <ResultT> ResultT evaluateTransactional(String stateMachineId,
-	                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
-		return updateStateMachineUseCase.evaluateTransactional(stateMachineId, processingFunction);
-	}
-
-	@Override
-	public <ResultT> ResultT evaluateTransactional(StateMachine<StatesT, EventsT> machine,
-	                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
-		return updateStateMachineUseCase.evaluateTransactional(machine, processingFunction);
-	}
-
-	@Override
 	public void run(String stateMachineId,
 	                Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
 
@@ -116,28 +98,6 @@ public class XStateMachineServiceImpl<StatesT, EventsT> implements XStateMachine
 			                                   processingFunction.accept(machine);
 			                                   return true;
 		                                   });
-	}
-
-	@Override
-	public void runTransactional(String stateMachineId,
-	                                          Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
-
-		updateStateMachineUseCase.evaluateTransactional(stateMachineId,
-		                                                machine -> {
-			                                                processingFunction.accept(machine);
-			                                                return true;
-		                                                });
-	}
-
-	@Override
-	public void runTransactional(StateMachine<StatesT, EventsT> stateMachine,
-	                                          Consumer<StateMachine<StatesT, EventsT>> processingFunction) {
-
-		updateStateMachineUseCase.evaluateTransactional(stateMachine,
-		                                                machine -> {
-			                                                processingFunction.accept(machine);
-			                                                return true;
-		                                                });
 	}
 
 	@Override

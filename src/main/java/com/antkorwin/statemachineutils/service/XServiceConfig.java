@@ -30,10 +30,7 @@ public class XServiceConfig {
 
 	@Bean
 	public <StatesT, EventsT> XStateMachineService<StatesT, EventsT> xStateMachineService(
-			@Qualifier("stateMachineRollbackWrapper")
 					StateMachineWrapper<StatesT, EventsT> stateMachineRollbackWrapper,
-			@Qualifier("stateMachineTransactionalWrapper")
-					StateMachineWrapper<StatesT, EventsT> stateMachineTransactionalWrapper,
 			StateMachineFactory<StatesT, EventsT> stateMachineFactory,
 			StateMachinePersister<StatesT, EventsT, String> persister,
 			StateMachinePersist<StatesT, EventsT, String> persist,
@@ -42,8 +39,7 @@ public class XServiceConfig {
 		CreateStateMachineUseCase<StatesT, EventsT> createStateMachineUseCase =
 				new CreateStateMachineUseCase<>(persister,
 				                                stateMachineFactory,
-				                                stateMachineRollbackWrapper,
-				                                stateMachineTransactionalWrapper);
+				                                stateMachineRollbackWrapper);
 
 		GetStateMachineUseCase<StatesT, EventsT> getStateMachineUseCase =
 				new GetStateMachineUseCase<>(persister,
@@ -53,7 +49,6 @@ public class XServiceConfig {
 
 		UpdateStateMachineUseCase<StatesT, EventsT> updateStateMachineUseCase =
 				new UpdateStateMachineUseCase<>(stateMachineRollbackWrapper,
-				                                stateMachineTransactionalWrapper,
 				                                persister,
 				                                getStateMachineUseCase);
 

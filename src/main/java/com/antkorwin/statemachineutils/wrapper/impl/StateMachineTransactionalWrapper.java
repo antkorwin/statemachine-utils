@@ -26,6 +26,13 @@ import static com.antkorwin.statemachineutils.wrapper.StateMachineWrapperErrorIn
  * StateMachine rollback wrapper which putting
  * the whole a processing function in a new transaction boundary.
  *
+ * This implementation wrap a processing function
+ * in new JPA transaction in order to have an ability to roll-back
+ * all items which you can persist in a DataBase through execute
+ * a processing function.
+ *
+ * This function will roll-back if the transaction inside does not commit successful.
+ *
  * @author Korovin Anatoliy
  */
 @Slf4j

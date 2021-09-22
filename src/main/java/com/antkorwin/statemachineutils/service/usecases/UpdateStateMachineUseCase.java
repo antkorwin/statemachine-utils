@@ -26,7 +26,6 @@ import static com.antkorwin.statemachineutils.service.XServiceErrorInfo.UNABLE_T
 public class UpdateStateMachineUseCase<StatesT, EventsT> {
 
 	private final StateMachineWrapper<StatesT, EventsT> rollbackWrapper;
-	private final StateMachineWrapper<StatesT, EventsT> transactionalWrapper;
 	private final StateMachinePersister<StatesT, EventsT, String> persister;
 	private final GetStateMachineUseCase<StatesT, EventsT> getStateMachineUseCase;
 
@@ -40,17 +39,6 @@ public class UpdateStateMachineUseCase<StatesT, EventsT> {
 	public <ResultT> ResultT evaluate(StateMachine<StatesT, EventsT> machine,
 	                                  Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
 		return internalEvaluate(machine, processingFunction, rollbackWrapper);
-	}
-
-	public <ResultT> ResultT evaluateTransactional(String stateMachineId,
-	                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
-		StateMachine<StatesT, EventsT> machine = getStateMachineUseCase.get(stateMachineId);
-		return internalEvaluate(machine, processingFunction, transactionalWrapper);
-	}
-
-	public <ResultT> ResultT evaluateTransactional(StateMachine<StatesT, EventsT> machine,
-	                                               Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction) {
-		return internalEvaluate(machine, processingFunction, transactionalWrapper);
 	}
 
 	private <ResultT> ResultT internalEvaluate(StateMachine<StatesT, EventsT> machine,

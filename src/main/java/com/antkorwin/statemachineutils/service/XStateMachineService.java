@@ -29,9 +29,6 @@ public interface XStateMachineService<StatesT, EventsT> {
 	StateMachine<StatesT, EventsT> createAndRun(String machineId,
 	                                            Consumer<StateMachine<StatesT, EventsT>> processingFunction);
 
-	StateMachine<StatesT, EventsT> createAndRunTransactional(String machineId,
-	                                                         Consumer<StateMachine<StatesT, EventsT>> processingFunction);
-
 	/**
      * Load an instance of a state machine form the
      * state machine persist-storage.
@@ -49,20 +46,11 @@ public interface XStateMachineService<StatesT, EventsT> {
 	<ResultT> ResultT evaluate(StateMachine<StatesT, EventsT> machine,
 	                           Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 
-	<ResultT> ResultT evaluateTransactional(StateMachine<StatesT, EventsT> machine,
-	                                        Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
-
 	void run(String stateMachineId,
 	         Consumer<StateMachine<StatesT, EventsT>> processingFunction);
 
 	void run(StateMachine<StatesT, EventsT> stateMachine,
 	         Consumer<StateMachine<StatesT, EventsT>> processingFunction);
-
-	void runTransactional(String stateMachineId,
-	                      Consumer<StateMachine<StatesT, EventsT>> processingFunction);
-
-	void runTransactional(StateMachine<StatesT, EventsT> stateMachine,
-	                      Consumer<StateMachine<StatesT, EventsT>> processingFunction);
 
 	StateMachine<StatesT, EventsT> update(String machineId, StateMachine<StatesT, EventsT> machine);
 
@@ -85,23 +73,6 @@ public interface XStateMachineService<StatesT, EventsT> {
      */
     <ResultT> ResultT evaluate(String stateMachineId,
                                Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
-
-    /**
-     * Same as evaluate method, but wrap a processing function
-     * in a JPA transaction in order to have an ability to roll-back
-     * all items which you can persist in a DataBase through execute
-     * a processing function.
-     *
-     * This function will roll-back if the transaction inside it does
-     * not commit successful.
-     *
-     * @param stateMachineId     identifier of the state machine
-     * @param processingFunction function that need to applies on the S.M.
-     * @param <ResultT>          result of the function
-     * @return result of the function
-     */
-    <ResultT> ResultT evaluateTransactional(String stateMachineId,
-                                            Function<StateMachine<StatesT, EventsT>, ResultT> processingFunction);
 
     /**
      * Retrieve all available events from a current state of a state machine.
